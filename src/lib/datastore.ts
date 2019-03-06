@@ -1,0 +1,59 @@
+import { types } from 'mobx-state-tree';
+
+const DataStore = types.model('DataStore', {});
+
+/*
+continuous --> normalized: value between 0-1, display: two decimal places
+categorical --> one-hot label, display: = raw 
+date --> raw: unix, display: dd-mm-yyyy or given ISO format
+*/
+
+const mapParams: MapTypeInfer = {
+  categorical: { frequencies: [] },
+  continuous: { min: 0, max: 0, mean: 0 },
+  date: { min: 0, max: 0 }
+};
+
+function generateParamsArrayFromInferArray(
+  inferArray: ReadonlyArray<InferType>
+): ReadonlyArray<
+  NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
+> {
+  return inferArray.map(possibleType => {
+    return mapParams[possibleType];
+  });
+}
+
+export function dataStoreFactory(
+  rawDataSet: GenericDataSet,
+  inferTypes: ReadonlyArray<InferType>,
+  name?: string
+): unknown {
+  const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
+    const keys = Object.keys(datum);
+    return new Set([...accumulator, ...keys]);
+  }, new Set<string>());
+
+  const keysArray = Array.from(keysSet);
+
+  const filledDataSet = rawDataSet.map(datum => {
+    const filledDatum: GenericDatum = keysArray.reduce(
+      (acc: GenericDatum, key) => {
+        return { ...acc, [key]: datum.hasOwnProperty(key) ? datum.key : null };
+      },
+      {}
+    );
+    return filledDatum;
+  });
+
+  const normalizingParameters: ReadonlyArray<
+    NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
+  > = //filledDataSet.reduce((accumulator, datum) => {},
+  generateParamsArrayFromInferArray(inferTypes));
+
+  const frozenArray = filledDataSet.map(filledDatum => {
+    return types.frozen<GenericDatum>(filledDatum);
+  });
+
+  return null;
+}
