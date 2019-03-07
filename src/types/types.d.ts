@@ -28,12 +28,14 @@ interface NormalizingCategorical {
   >;
 }
 
-// type InferType = 'continuous' | 'categorical' | 'date';
-
 interface MapTypeInfer {
   readonly continuous: NormalizingContinuous;
   readonly categorical: NormalizingCategorical;
   readonly date: NormalizingDatetime;
 }
 
-type A<T extends keyof MapTypeInfer> = MapTypeInfer[T];
+type InferType = keyof MapTypeInfer;
+
+type MapSchema<T extends InferType> = MapTypeInfer[T];
+
+interface InferObject { readonly [key: string]: InferType }

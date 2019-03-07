@@ -1,6 +1,6 @@
 import { types } from 'mobx-state-tree';
 
-const DataStore = types.model('DataStore', {});
+export const DataStore = types.model('DataStore', {});
 
 /*
 continuous --> normalized: value between 0-1, display: two decimal places
@@ -14,7 +14,7 @@ const mapParams: MapTypeInfer = {
   date: { min: 0, max: 0 }
 };
 
-function generateParamsArrayFromInferArray(
+export function generateParamsArrayFromInferArray(
   inferArray: ReadonlyArray<InferType>
 ): ReadonlyArray<
   NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
@@ -26,34 +26,41 @@ function generateParamsArrayFromInferArray(
 
 export function dataStoreFactory(
   rawDataSet: GenericDataSet,
-  inferTypes: ReadonlyArray<InferType>,
+  inferTypes: InferObject,
   name?: string
 ): unknown {
-  const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
-    const keys = Object.keys(datum);
-    return new Set([...accumulator, ...keys]);
-  }, new Set<string>());
+  // const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
+  //   const keys = Object.keys(datum);
+  //   return new Set([...accumulator, ...keys]);
+  // }, new Set<string>());
 
-  const keysArray = Array.from(keysSet);
+  /* tslint:disable */
+  console.log(rawDataSet, inferTypes, name);
+  /* tslint:enable */
 
-  const filledDataSet = rawDataSet.map(datum => {
-    const filledDatum: GenericDatum = keysArray.reduce(
-      (acc: GenericDatum, key) => {
-        return { ...acc, [key]: datum.hasOwnProperty(key) ? datum.key : null };
-      },
-      {}
-    );
-    return filledDatum;
-  });
+  // const keysArray = Array.from(keysSet);
 
-  const normalizingParameters: ReadonlyArray<
-    NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
-  > = //filledDataSet.reduce((accumulator, datum) => {},
-  generateParamsArrayFromInferArray(inferTypes));
+  // const filledDataSet = rawDataSet.map(datum => {
+  //   const filledDatum: GenericDatum = keysArray.reduce(
+  //     (acc: GenericDatum, key) => {
+  //       return { ...acc, [key]: datum.hasOwnProperty(key) ? datum.key : null };
+  //     },
+  //     {}
+  //   );
+  //   return filledDatum;
+  // });
 
-  const frozenArray = filledDataSet.map(filledDatum => {
-    return types.frozen<GenericDatum>(filledDatum);
-  });
+  // const normalizingParameters: ReadonlyArray<
+  //   NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
+  // > = null;
+  // // filledDataSet.reduce((accumulator, datum) => {
 
-  return null;
+  // // },
+  // // generateParamsArrayFromInferArray(inferTypes));
+
+  // const frozenArray = filledDataSet.map(filledDatum => {
+  //   return types.frozen<GenericDatum>(filledDatum);
+  // });
+
+  return {};
 }
