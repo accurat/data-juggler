@@ -21,7 +21,9 @@ export const generateNewMoments = (accumulator: MomentsObject) => (
 
   const newAccumulator = values.map((value, index) => {
     const variableMoments = accumulator[index];
-    const { min, max } = variableMoments;
+    switch(typeof variableMoments) {
+      case 
+    }
   });
   return;
 };
