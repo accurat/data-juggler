@@ -1,4 +1,5 @@
 import { types } from 'mobx-state-tree';
+import { isCategorical, isContinous, isDatetime } from '../types/utils';
 
 export const DataStore = types.model('DataStore', {});
 
@@ -7,30 +8,61 @@ continuous --> normalized: value between 0-1, display: two decimal places
 categorical --> one-hot label, display: = raw 
 date --> raw: unix, display: dd-mm-yyyy or given ISO format
 */
+// tslint:disable:no-if-statement
+// Fuck you tslint, watch me us those fucking if statements.
 
 const mapParams: MapTypeInfer = {
-  categorical: { frequencies: [] },
-  continuous: { min: 0, max: 0, mean: 0 },
+  categorical: { frequencies: {} },
+  continuous: { min: 0, max: 0, sum: 0 },
   date: { min: 0, max: 0 }
 };
 
-export const generateNewMoments = (accumulator: MomentsObject) => (
+export const generateNewMoments = (
+  accumulator: MomentsObject,
   datum: GenericDatum
-): unknown => {
-  const values = Object.values(datum);
+) => {
+  const entries = Object.entries(datum);
 
-  const newAccumulator = values.map((value, index) => {
+  const newMoments: MomentsObject = entries.map(([key, value], index) => {
     const variableMoments = accumulator[index];
-    switch(typeof variableMoments) {
-      case 
+
+    if (isCategorical(variableMoments) && typeof value === 'string') {
+      const { frequencies } = variableMoments;
+      const newFrequencies = {
+        ...frequencies,
+        [key]: frequencies[key] ? frequencies[key] + 1 : 1
+      };
+      const newFrequencyMoments: NormalizingCategorical = {
+        frequencies: newFrequencies
+      };
+
+      return newFrequencyMoments;
+    } else if (isContinous(variableMoments) && typeof value === 'number') {
+      const { min, max, sum } = variableMoments;
+      const newContinousMoments: NormalizingContinuous = {
+        max: value && value > max ? value : max,
+        min: value && value < min ? value : min,
+        sum: sum + value
+      };
+
+      return newContinousMoments;
+    } else if (isDatetime(variableMoments) && typeof value === 'number') {
+      const { min, max } = variableMoments;
+      const newDatetimeMoments: NormalizingDatetime = {
+        max: value && value > max ? value : max,
+        min: value && value < min ? value : min
+      };
+      return newDatetimeMoments;
+    } else {
+      return variableMoments;
     }
   });
-  return;
+  return newMoments;
 };
 
 export function generateParamsArrayFromInferObject(
   inferObject: InferObject
-): Array<NormalizingContinuous | NormalizingCategorical | NormalizingDatetime> {
+): MomentsObject {
   return Object.values(inferObject).map(possibleType => {
     return mapParams[possibleType];
   });
@@ -71,13 +103,7 @@ export function calculateMoments(
   );
 
   const momentsObject: MomentsObject = rawDataSet.reduce(
-    (accumulator: MomentsObject, datum) => {
-      const entries = Object.entries(datum);
-
-      const h = entries.map((key, value) => {});
-
-      return { ...accumulator };
-    },
+    generateNewMoments,
     inferedObject
   );
 
