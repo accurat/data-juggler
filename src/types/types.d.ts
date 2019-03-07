@@ -9,8 +9,6 @@ interface GenericDatum {
     | null;
 }
 
-type GenericDataSet = ReadonlyArray<GenericDatum>;
-
 interface NormalizingContinuous {
   readonly mean: number;
   readonly min: number;
@@ -38,4 +36,10 @@ type InferType = keyof MapTypeInfer;
 
 type MapSchema<T extends InferType> = MapTypeInfer[T];
 
-interface InferObject { readonly [key: string]: InferType }
+interface InferObject {
+  readonly [key: string]: InferType;
+}
+
+type MomentsObject = Array<
+  NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
+>;

@@ -14,10 +14,22 @@ const mapParams: MapTypeInfer = {
   date: { min: 0, max: 0 }
 };
 
-export function generateParamsArrayFromInferArray(
-  inferArray: InferType[]
+export const generateNewMoments = (accumulator: MomentsObject) => (
+  datum: GenericDatum
+): unknown => {
+  const values = Object.values(datum);
+
+  const newAccumulator = values.map((value, index) => {
+    const variableMoments = accumulator[index];
+    const { min, max } = variableMoments;
+  });
+  return;
+};
+
+export function generateParamsArrayFromInferObject(
+  inferObject: InferObject
 ): Array<NormalizingContinuous | NormalizingCategorical | NormalizingDatetime> {
-  return inferArray.map(possibleType => {
+  return Object.values(inferObject).map(possibleType => {
     return mapParams[possibleType];
   });
 }
@@ -32,9 +44,10 @@ export function getKeysArray(rawDataSet: GenericDatum[]): string[] {
   return keysArray;
 }
 
-export function populateNullData(rawDataSet: GenericDatum[]): GenericDatum[] {
-  const keysArray = getKeysArray(rawDataSet);
-
+export function populateNullData(
+  rawDataSet: GenericDatum[],
+  keysArray: string[]
+): GenericDatum[] {
   const filledDataSet = rawDataSet.map(datum => {
     const filledDatum: GenericDatum = keysArray.reduce(
       (acc: GenericDatum, key) => {
@@ -47,44 +60,35 @@ export function populateNullData(rawDataSet: GenericDatum[]): GenericDatum[] {
   return filledDataSet;
 }
 
+export function calculateMoments(
+  rawDataSet: GenericDatum[],
+  inferObject: InferObject
+): MomentsObject {
+  const inferedObject: MomentsObject = generateParamsArrayFromInferObject(
+    inferObject
+  );
+
+  const momentsObject: MomentsObject = rawDataSet.reduce(
+    (accumulator: MomentsObject, datum) => {
+      const entries = Object.entries(datum);
+
+      const h = entries.map((key, value) => {});
+
+      return { ...accumulator };
+    },
+    inferedObject
+  );
+
+  return momentsObject;
+}
+
 export function dataStoreFactory(
-  rawDataSet: GenericDataSet,
-  inferTypes: InferObject,
-  name?: string
+  rawDataSet: GenericDatum[]
+  // inferTypes: InferObject
+  // name?: string
 ): unknown {
-  // This is done temporaraly in order to avoid tslint errors
-  /* tslint:disable */
-  console.log(rawDataSet, inferTypes, name);
-  /* tslint:enable */
-
-  const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
-    const keys = Object.keys(datum);
-    return new Set([...accumulator, ...keys]);
-  }, new Set<string>());
-
-  const keysArray = Array.from(keysSet);
-
-  const filledDataSet = rawDataSet.map(datum => {
-    const filledDatum: GenericDatum = keysArray.reduce(
-      (acc: GenericDatum, key) => {
-        return { ...acc, [key]: datum.hasOwnProperty(key) ? datum.key : null };
-      },
-      {}
-    );
-    return filledDatum;
-  });
-
-  // const normalizingParameters: ReadonlyArray<
-  //   NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
-  // > = null;
-  // // filledDataSet.reduce((accumulator, datum) => {
-
-  // // },
-  // // generateParamsArrayFromInferArray(inferTypes));
-
-  // const frozenArray = filledDataSet.map(filledDatum => {
-  //   return types.frozen<GenericDatum>(filledDatum);
-  // });
+  const keysArray = getKeysArray(rawDataSet);
+  const filledDataSet = populateNullData(rawDataSet, keysArray);
 
   return filledDataSet;
 }
