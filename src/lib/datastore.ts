@@ -15,13 +15,36 @@ const mapParams: MapTypeInfer = {
 };
 
 export function generateParamsArrayFromInferArray(
-  inferArray: ReadonlyArray<InferType>
-): ReadonlyArray<
-  NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
-> {
+  inferArray: InferType[]
+): Array<NormalizingContinuous | NormalizingCategorical | NormalizingDatetime> {
   return inferArray.map(possibleType => {
     return mapParams[possibleType];
   });
+}
+
+export function getKeysArray(rawDataSet: GenericDatum[]): string[] {
+  const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
+    const keys = Object.keys(datum);
+    return new Set([...accumulator, ...keys]);
+  }, new Set<string>());
+
+  const keysArray = Array.from(keysSet);
+  return keysArray;
+}
+
+export function populateNullData(rawDataSet: GenericDatum[]): GenericDatum[] {
+  const keysArray = getKeysArray(rawDataSet);
+
+  const filledDataSet = rawDataSet.map(datum => {
+    const filledDatum: GenericDatum = keysArray.reduce(
+      (acc: GenericDatum, key) => {
+        return { ...acc, [key]: datum.hasOwnProperty(key) ? datum[key] : null };
+      },
+      {}
+    );
+    return filledDatum;
+  });
+  return filledDataSet;
 }
 
 export function dataStoreFactory(
@@ -29,26 +52,27 @@ export function dataStoreFactory(
   inferTypes: InferObject,
   name?: string
 ): unknown {
-  // const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
-  //   const keys = Object.keys(datum);
-  //   return new Set([...accumulator, ...keys]);
-  // }, new Set<string>());
-
+  // This is done temporaraly in order to avoid tslint errors
   /* tslint:disable */
   console.log(rawDataSet, inferTypes, name);
   /* tslint:enable */
 
-  // const keysArray = Array.from(keysSet);
+  const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
+    const keys = Object.keys(datum);
+    return new Set([...accumulator, ...keys]);
+  }, new Set<string>());
 
-  // const filledDataSet = rawDataSet.map(datum => {
-  //   const filledDatum: GenericDatum = keysArray.reduce(
-  //     (acc: GenericDatum, key) => {
-  //       return { ...acc, [key]: datum.hasOwnProperty(key) ? datum.key : null };
-  //     },
-  //     {}
-  //   );
-  //   return filledDatum;
-  // });
+  const keysArray = Array.from(keysSet);
+
+  const filledDataSet = rawDataSet.map(datum => {
+    const filledDatum: GenericDatum = keysArray.reduce(
+      (acc: GenericDatum, key) => {
+        return { ...acc, [key]: datum.hasOwnProperty(key) ? datum.key : null };
+      },
+      {}
+    );
+    return filledDatum;
+  });
 
   // const normalizingParameters: ReadonlyArray<
   //   NormalizingContinuous | NormalizingCategorical | NormalizingDatetime
@@ -62,5 +86,5 @@ export function dataStoreFactory(
   //   return types.frozen<GenericDatum>(filledDatum);
   // });
 
-  return {};
+  return filledDataSet;
 }
