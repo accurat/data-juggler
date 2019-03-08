@@ -10,13 +10,13 @@ function hasMultipleProperties(
 export const isContinous = (
   moment: MomentsType
 ): moment is NormalizingContinuous =>
-  hasMultipleProperties(moment, ['min', 'max', 'mean']);
+  hasMultipleProperties(moment, ['min', 'max', 'sum']);
 
 export const isDatetime = (
   moment: MomentsType
 ): moment is NormalizingDatetime =>
   hasMultipleProperties(moment, ['min', 'max']) &&
-  !moment.hasOwnProperty('mean');
+  !moment.hasOwnProperty('sum');
 
 export const isCategorical = (
   moment: MomentsType

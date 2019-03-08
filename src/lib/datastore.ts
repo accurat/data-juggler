@@ -13,8 +13,8 @@ date --> raw: unix, display: dd-mm-yyyy or given ISO format
 
 const mapParams: MapTypeInfer = {
   categorical: { frequencies: {} },
-  continuous: { min: 0, max: 0, sum: 0 },
-  date: { min: 0, max: 0 }
+  continuous: { min: null, max: null, sum: 0 },
+  date: { min: null, max: null }
 };
 
 export function generateParamsArrayFromInferObject(

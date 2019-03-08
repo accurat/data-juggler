@@ -13,17 +13,17 @@ interface GenericDatum {
 
 interface NormalizingContinuous {
   readonly sum: number;
-  readonly min: number;
-  readonly max: number;
+  readonly min: number | null;
+  readonly max: number | null;
 }
 
 interface NormalizingDatetime {
-  readonly min: number;
-  readonly max: number;
+  readonly min: number | null;
+  readonly max: number | null;
 }
 
 interface NormalizingCategorical {
-  readonly frequencies: { readonly [variable: string]: number };
+  readonly frequencies: { readonly [instance: string]: number };
 }
 
 interface MapTypeInfer {
@@ -41,6 +41,6 @@ interface InferObject {
   readonly [key: string]: InferType;
 }
 
-type MomentsObject = {
-  readonly [variable: string]: MomentsType
-};
+interface MomentsObject {
+  readonly [variable: string]: MomentsType;
+}

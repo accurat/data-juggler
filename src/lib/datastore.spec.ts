@@ -2,6 +2,7 @@
 // tslint:disable:no-console
 import test from 'ava';
 import {
+  calculateMoments,
   dataStoreFactory,
   generateParamsArrayFromInferObject,
   getKeysArray,
@@ -17,6 +18,18 @@ const INSTANCE_TYPES: InferObject = {
   b: 'categorical',
   c: 'continuous'
 };
+
+test('inferObject', t => {
+  const defaultMoments = generateParamsArrayFromInferObject(INSTANCE_TYPES);
+
+  const EXPECTED_DEFAULT_MOMENTS: MomentsObject = {
+    a: { min: null, max: null, sum: 0 },
+    b: { frequencies: {} },
+    c: { min: null, max: null, sum: 0 }
+  };
+
+  t.deepEqual(EXPECTED_DEFAULT_MOMENTS, defaultMoments);
+});
 
 test('dataStore', t => {
   const keysArray = getKeysArray(FIRST_SAMPLE_DATA);
@@ -34,6 +47,13 @@ test('dataStore', t => {
     // 'dataStore'
   );
 
+  const moments = calculateMoments(filledSample, INSTANCE_TYPES);
+  const EXPECTED_MOMENTS: MomentsObject = {
+    a: { min: 2, max: 3, sum: 5 },
+    b: { frequencies: { mamma: 1, papà: 1 } },
+    c: { min: 2, max: 2, sum: 2 }
+  };
+
   // Keys array tests
   t.notThrows(() => getKeysArray(FIRST_SAMPLE_DATA));
   t.deepEqual(EXPECTED_KEYS_ARRAY, keysArray);
@@ -42,17 +62,10 @@ test('dataStore', t => {
   t.notThrows(() => populateNullData(FIRST_SAMPLE_DATA, keysArray));
   t.deepEqual(EXPECTED_FILLED_SAMPLE, filledSample);
 
+  // Moments test
+  t.notThrows(() => calculateMoments(filledSample, INSTANCE_TYPES));
+  t.deepEqual(EXPECTED_MOMENTS, moments);
+
   t.notThrows(() => dataStoreFactory(FIRST_SAMPLE_DATA));
   t.not(result, null);
-});
-
-test('inferObject', t => {
-  const defualtInfer = generateParamsArrayFromInferObject(INSTANCE_TYPES);
-  const EXPECTED_INFER_DEFAULT = [
-    { min: 0, max: 0, mean: 0 },
-    { frequencies: [] },
-    { min: 0, max: 0, mean: 0 }
-  ];
-
-  // t.deepEqual(EXPECTED_INFER_DEFAULT, defualtInfer);
 });
