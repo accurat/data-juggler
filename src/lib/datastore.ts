@@ -1,9 +1,8 @@
 import _ from 'lodash';
-import { getRoot, types } from 'mobx-state-tree';
+import { _NotCustomized, types } from 'mobx-state-tree';
 
+import { GenericModelData } from '../types/mobx-types';
 import { generateDatumModel, generateNewMoments } from './utils';
-
-export const DataStore = types.model('DataStore', {});
 
 /*
 continuous --> normalized: value between 0-1, display: two decimal places
@@ -73,7 +72,7 @@ export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
   inferTypes: InferObject
-): unknown {
+): GenericModelData {
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
   const moments = calculateMoments(filledDataSet, inferTypes);
@@ -84,7 +83,7 @@ export function dataStoreFactory(
     generateDatumModel(keysArray, inferTypes, moments)
   );
   const genericDataset = types
-    .model('dataSet', {
+    .model(modelName, {
       data: types.array(datumStore)
     })
     .extend(self => {
@@ -103,5 +102,5 @@ export function dataStoreFactory(
       };
     });
 
-  return { modelName, genericDataset, moments };
+  return genericDataset;
 }
