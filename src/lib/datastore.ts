@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { types } from 'mobx-state-tree';
+import { getRoot, types } from 'mobx-state-tree';
 
-import { generateNewMoments } from './utils';
+import { generateDatumModel, generateNewMoments } from './utils';
 
 export const DataStore = types.model('DataStore', {});
 
@@ -70,12 +70,38 @@ export function calculateMoments(
 }
 
 export function dataStoreFactory(
-  rawDataSet: GenericDatum[]
-  // inferTypes: InferObject
-  // name?: string
+  name: string,
+  rawDataSet: GenericDatum[],
+  inferTypes: InferObject
 ): unknown {
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
+  const moments = calculateMoments(filledDataSet, inferTypes);
+  const modelName = name || 'dataStore';
 
-  return filledDataSet;
+  const datumStore = types.model(
+    'datumStore',
+    generateDatumModel(keysArray, inferTypes, moments)
+  );
+  const genericDataset = types
+    .model('dataSet', {
+      data: types.array(datumStore)
+    })
+    .extend(self => {
+      const getAllDataForVariable = keysArray.reduce(
+        (views, variable) => ({
+          ...views,
+          get [variable](): Array<number | string> {
+            return self.data.map(datum => datum[variable]);
+          }
+        }),
+        {}
+      );
+
+      return {
+        views: { ...getAllDataForVariable }
+      };
+    });
+
+  return { modelName, genericDataset, moments };
 }

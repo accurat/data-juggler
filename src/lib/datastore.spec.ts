@@ -41,11 +41,7 @@ test('dataStore', t => {
     { a: 2, b: 'papà', c: 2 }
   ];
 
-  const result = dataStoreFactory(
-    FIRST_SAMPLE_DATA
-    // INSTANCE_TYPES,
-    // 'dataStore'
-  );
+  const result = dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES);
 
   const moments = calculateMoments(filledSample, INSTANCE_TYPES);
   const EXPECTED_MOMENTS: MomentsObject = {
@@ -66,6 +62,8 @@ test('dataStore', t => {
   t.notThrows(() => calculateMoments(filledSample, INSTANCE_TYPES));
   t.deepEqual(EXPECTED_MOMENTS, moments);
 
-  t.notThrows(() => dataStoreFactory(FIRST_SAMPLE_DATA));
+  t.notThrows(() =>
+    dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES)
+  );
   t.not(result, null);
 });

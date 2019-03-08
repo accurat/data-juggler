@@ -1,14 +1,7 @@
 type ValueOf<T> = T[keyof T];
 
 interface GenericDatum {
-  readonly [key: string]:
-    | number
-    | string
-    | boolean
-    | ReadonlyArray<number>
-    | ReadonlyArray<string>
-    | GenericDatum
-    | null;
+  readonly [key: string]: number | string | boolean | null;
 }
 
 interface NormalizingContinuous {
