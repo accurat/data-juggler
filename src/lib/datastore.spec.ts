@@ -1,5 +1,4 @@
 // tslint:disable:no-expression-statement
-// tslint:disable:no-console
 import test from 'ava';
 import {
   calculateMoments,
@@ -41,7 +40,12 @@ test('dataStore', t => {
     { a: 2, b: 'papà', c: 2 }
   ];
 
-  const Store = dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES);
+  const Store = dataStoreFactory(
+    'hello',
+    FIRST_SAMPLE_DATA,
+    INSTANCE_TYPES
+  ) as { a: number[]; toJSON: () => unknown }; // Better typing for this
+  const a = Store.a;
 
   const moments = calculateMoments(filledSample, INSTANCE_TYPES);
   const EXPECTED_MOMENTS: MomentsObject = {
@@ -65,5 +69,5 @@ test('dataStore', t => {
   t.notThrows(() =>
     dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES)
   );
-  t.not(Store, null);
+  t.deepEqual(a, [3, 2]);
 });

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
-import { DataStoreInstanceType } from '../types/mobx-types';
+// import { DataStoreInstanceType } from '../types/mobx-types';
 import { generateDatumModel, generateNewMoments } from './utils';
 
 /*
@@ -72,7 +72,8 @@ export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
   inferTypes: InferObject
-): DataStoreInstanceType {
+): unknown {
+  // TODO - Better typing for this.
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
   const moments = calculateMoments(filledDataSet, inferTypes);
@@ -82,25 +83,31 @@ export function dataStoreFactory(
     'datumStore',
     generateDatumModel(keysArray, inferTypes, moments)
   );
+
+  const instanceData = filledDataSet.map(datum => datumStore.create(datum));
+
   const genericDataset = types
     .model(modelName, {
       data: types.array(datumStore)
     })
     .extend(self => {
-      const getAllDataForVariable = keysArray.reduce(
-        (views, variable) => ({
-          ...views,
-          get [variable](): Array<number | string> {
-            return self.data.map(datum => datum[variable]);
+      const viewsVariableGetters = keysArray.reduce((acc, variable) => {
+        const newViews = {
+          ...acc,
+          [variable]: {
+            configurable: true,
+            enumerable: true,
+            get: () => self.data.map(datum => datum[variable])
           }
-        }),
-        {}
-      );
+        };
+        return newViews;
+      }, {});
+      const views = Object.create(Object.prototype, viewsVariableGetters);
 
       return {
-        views: { ...getAllDataForVariable }
+        views
       };
     });
 
-  return genericDataset.create({});
+  return genericDataset.create({ data: instanceData });
 }

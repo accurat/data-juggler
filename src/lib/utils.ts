@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { ISimpleType, types } from 'mobx-state-tree';
+import { IMaybeNull, ISimpleType, types } from 'mobx-state-tree';
 
 import { isCategorical, isContinous, isDatetime } from '../types/utils';
 
@@ -69,25 +69,25 @@ export function generateDatumModel(
   datumKeys: string[],
   instanceObj: InferObject,
   moments: MomentsObject
-): { [variable: string]: ISimpleType<string | number> } {
+): { [variable: string]: IMaybeNull<ISimpleType<number | string | boolean>> } {
   const model = datumKeys.map(variable => {
     const instance = instanceObj[variable];
     switch (instance) {
       case 'continuous':
-        return [variable, types.number];
+        return [variable, types.maybeNull(types.number)];
       case 'date':
-        return [variable, types.number];
+        return [variable, types.maybeNull(types.number)];
       case 'categorical':
         const moment = moments[variable];
         const uniqueKeys = isCategorical(moment)
           ? _.keys(moment.frequencies)
           : [];
-        return [variable, types.enumeration(uniqueKeys)];
+        return [variable, types.maybeNull(types.enumeration(uniqueKeys))];
     }
   });
 
   const storeObj: {
-    [variable: string]: ISimpleType<number | string>;
+    [variable: string]: IMaybeNull<ISimpleType<number | string | boolean>>;
   } = _.fromPairs(model);
 
   return storeObj;
