@@ -41,4 +41,6 @@ interface InferObject {
   readonly [key: string]: InferType;
 }
 
-type MomentsObject = MomentsType[];
+type MomentsObject = {
+  readonly [variable: string]: MomentsType
+};
