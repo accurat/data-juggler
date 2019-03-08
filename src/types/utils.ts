@@ -1,6 +1,6 @@
 // tslint:disable:no-if-statement
 
-function hasMultipleProperties(
+export function hasMultipleProperties(
   obj: { [key: string]: unknown },
   properties: string[]
 ): boolean {

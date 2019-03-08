@@ -3,10 +3,11 @@ import {
   IArrayType,
   IModelType,
   ISimpleType,
+  ModelInstanceType,
   ModelPropertiesDeclarationToProperties
 } from 'mobx-state-tree';
 
-export type GenericModelData = IModelType<
+export type DataStoreInstanceType = ModelInstanceType<
   ModelPropertiesDeclarationToProperties<{
     data: IArrayType<
       IModelType<

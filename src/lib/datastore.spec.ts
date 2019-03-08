@@ -41,7 +41,7 @@ test('dataStore', t => {
     { a: 2, b: 'papà', c: 2 }
   ];
 
-  const result = dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES);
+  const Store = dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES);
 
   const moments = calculateMoments(filledSample, INSTANCE_TYPES);
   const EXPECTED_MOMENTS: MomentsObject = {
@@ -65,5 +65,5 @@ test('dataStore', t => {
   t.notThrows(() =>
     dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES)
   );
-  t.not(result, null);
+  t.not(Store, null);
 });

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
-import { GenericModelData } from '../types/mobx-types';
+import { DataStoreInstanceType } from '../types/mobx-types';
 import { generateDatumModel, generateNewMoments } from './utils';
 
 /*
@@ -72,7 +72,7 @@ export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
   inferTypes: InferObject
-): GenericModelData {
+): DataStoreInstanceType {
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
   const moments = calculateMoments(filledDataSet, inferTypes);
@@ -102,5 +102,5 @@ export function dataStoreFactory(
       };
     });
 
-  return genericDataset;
+  return genericDataset.create({});
 }
