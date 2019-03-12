@@ -1,12 +1,18 @@
 import _ from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
-// import { DataStoreInstanceType } from '../types/mobx-types';
 import {
+  CategoricalDatum,
+  ContinuousDatum,
+  DatetimeDatum,
   generateDatumModel,
   generateNewMoments,
   processDatumSnapshotFactory
 } from './utils';
+
+export type DataProperty = Array<{
+  [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
+}>;
 
 /*
 continuous --> normalized: value between 0-1, display: two decimal places
@@ -76,7 +82,12 @@ export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
   inferTypes: InferObject
-): unknown {
+): {
+  [variable: string]:
+    | Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>
+    | DataProperty;
+  data: DataProperty;
+} {
   // TODO - Better typing for this.
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
@@ -114,5 +125,8 @@ export function dataStoreFactory(
       };
     });
 
-  return genericDataset.create({ data: instanceData });
+  const dataSetInstance = genericDataset.create({
+    data: instanceData
+  });
+  return dataSetInstance;
 }

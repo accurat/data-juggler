@@ -3,21 +3,22 @@ import { DateTime } from 'luxon';
 
 import { IMaybeNull, IType, types } from 'mobx-state-tree';
 import { isCategorical, isContinous, isDatetime } from '../types/utils';
+import { DataProperty } from './datastore';
 
 // tslint:disable:no-if-statement
 // tslint:disable:no-this
 // Fuck you tslint, watch me us those fucking if statements.
 
-interface ContinuousDatum {
+export interface ContinuousDatum {
   raw: number;
   scaled: number | null;
 }
 
-interface CategoricalDatum {
+export interface CategoricalDatum {
   raw: string;
 }
 
-interface DatetimeDatum {
+export interface DatetimeDatum {
   raw: number;
   iso: string;
   locale: string;

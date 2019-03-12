@@ -52,15 +52,7 @@ test('dataStore', t => {
     { a: 1, b: 'papà', c: 4, d: DATES_D[3] }
   ];
 
-  const Store = dataStoreFactory(
-    'hello',
-    FIRST_SAMPLE_DATA,
-    INSTANCE_TYPES
-  ) as {
-    a: Array<{ [key: string]: unknown }>;
-    d: Array<{ [key: string]: unknown }>;
-    toJSON: () => unknown;
-  }; // Better typing for this
+  const Store = dataStoreFactory('hello', FIRST_SAMPLE_DATA, INSTANCE_TYPES); // Better typing for this
   const a = Store.a;
   const d = Store.d;
 
