@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { fromPairs, toPairs } from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
 import {
@@ -29,8 +29,8 @@ const mapParams: MapTypeInfer = {
 export function generateParamsArrayFromInferObject(
   inferObject: InferObject
 ): MomentsObject {
-  return _.fromPairs(
-    _.toPairs(inferObject).map(([variable, possibleType]) => {
+  return fromPairs(
+    toPairs(inferObject).map(([variable, possibleType]) => {
       return [variable, mapParams[possibleType]];
     })
   );

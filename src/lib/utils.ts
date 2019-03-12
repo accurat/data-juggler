@@ -1,9 +1,15 @@
-import _ from 'lodash';
+import {
+  fromPairs,
+  isNull,
+  isNumber,
+  max as _max,
+  min as _min,
+  toPairs
+} from 'lodash';
 import { DateTime } from 'luxon';
 
 import { IMaybeNull, IType, types } from 'mobx-state-tree';
 import { isCategorical, isContinous, isDatetime } from '../types/utils';
-import { DataProperty } from './datastore';
 
 // tslint:disable:no-if-statement
 // tslint:disable:no-this
@@ -27,15 +33,15 @@ export interface DatetimeDatum {
 }
 
 const updateMin = (value: number, min: number | null) =>
-  _.isNull(min) ? value : _.min([value, min]) || min;
+  isNull(min) ? value : _min([value, min]) || min;
 const updateMax = (value: number, max: number | null) =>
-  _.isNull(max) ? value : _.max([value, max]) || max;
+  isNull(max) ? value : _max([value, max]) || max;
 
 export const generateNewMoments = (
   accumulator: MomentsObject,
   datum: GenericDatum
 ) => {
-  const entries = _.toPairs(datum);
+  const entries = toPairs(datum);
 
   const newMomentsEntries = entries.map(([variable, value]) => {
     const variableMoments = accumulator[variable];
@@ -80,7 +86,7 @@ export const generateNewMoments = (
     }
   });
 
-  const newMoments: MomentsObject = _.fromPairs(newMomentsEntries);
+  const newMoments: MomentsObject = fromPairs(newMomentsEntries);
 
   return newMoments;
 };
@@ -97,7 +103,7 @@ export function generateDatumModel(datumKeys: string[]): FrozenObject {
 
   const storeObj: {
     [variable: string]: IMaybeNull<IType<any, any, any>>;
-  } = _.fromPairs(model);
+  } = fromPairs(model);
 
   return storeObj;
 }
@@ -114,8 +120,8 @@ export function processDatumSnapshotFactory(
   return (snapshot: GenericDatum) => {
     const processedSnapshot: {
       [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
-    } = _.fromPairs(
-      _.toPairs(snapshot).map(([variable, value]) => {
+    } = fromPairs(
+      toPairs(snapshot).map(([variable, value]) => {
         const inference = inferObject[variable];
 
         switch (inference) {
@@ -124,7 +130,7 @@ export function processDatumSnapshotFactory(
             const { min: valueMin, max: valueMax } = isContinous(contMoments)
               ? contMoments
               : { min: 0, max: 1 };
-            if (_.isNumber(value)) {
+            if (isNumber(value)) {
               const returnValueObj: ContinuousDatum = {
                 raw: value,
                 get scaled(): number | null {
@@ -146,7 +152,7 @@ export function processDatumSnapshotFactory(
               ? dateMoments
               : { min: 0, max: 1 };
 
-            if (_.isNumber(value) && dateMin && dateMax) {
+            if (isNumber(value) && dateMin && dateMax) {
               const returnObjDate: DatetimeDatum = {
                 raw: value,
                 get dateTime(): DateTime {
