@@ -2,7 +2,11 @@ import _ from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
 // import { DataStoreInstanceType } from '../types/mobx-types';
-import { generateDatumModel, generateNewMoments } from './utils';
+import {
+  generateDatumModel,
+  generateNewMoments,
+  processDatumSnapshotFactory
+} from './utils';
 
 /*
 continuous --> normalized: value between 0-1, display: two decimal places
@@ -79,7 +83,11 @@ export function dataStoreFactory(
   const moments = calculateMoments(filledDataSet, inferTypes);
   const modelName = name || 'dataStore';
 
-  const datumStore = types.model('datumStore', generateDatumModel(keysArray));
+  const datumPreprocessor = processDatumSnapshotFactory(inferTypes, moments);
+
+  const datumStore = types
+    .model('datumStore', generateDatumModel(keysArray))
+    .preProcessSnapshot(datumPreprocessor);
 
   const instanceData = filledDataSet.map(datum => datumStore.create(datum));
 

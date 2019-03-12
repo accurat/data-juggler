@@ -100,66 +100,71 @@ export function generateDatumModel(datumKeys: string[]): FrozenObject {
   return storeObj;
 }
 
-export function processDatumSnapshot(
-  snapshot: GenericDatum,
+export function processDatumSnapshotFactory(
   inferObject: InferObject,
   moments: MomentsObject,
   dateFormatting?: Intl.DateTimeFormatOptions
-): { [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum } {
-  const processedSnapshot: {
-    [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
-  } = _.fromPairs(
-    _.toPairs(snapshot).map(([variable, value]) => {
-      const inference = inferObject[variable];
+): (
+  snapshot: GenericDatum
+) => {
+  [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
+} {
+  return (snapshot: GenericDatum) => {
+    const processedSnapshot: {
+      [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
+    } = _.fromPairs(
+      _.toPairs(snapshot).map(([variable, value]) => {
+        const inference = inferObject[variable];
 
-      switch (inference) {
-        case 'continuous':
-          const contMoments = moments[variable];
-          const { min: valueMin, max: valueMax } = isContinous(contMoments)
-            ? contMoments
-            : { min: 0, max: 1 };
-          if (_.isNumber(value) && valueMax && valueMin) {
-            const returnValueObj: ContinuousDatum = {
-              raw: value,
-              scaled: (value - valueMin) / (valueMax - valueMin)
-            };
+        switch (inference) {
+          case 'continuous':
+            const contMoments = moments[variable];
+            const { min: valueMin, max: valueMax } = isContinous(contMoments)
+              ? contMoments
+              : { min: 0, max: 1 };
+            if (_.isNumber(value) && valueMax && valueMin) {
+              const returnValueObj: ContinuousDatum = {
+                raw: value,
+                scaled: (value - valueMin) / (valueMax - valueMin)
+              };
 
-            return [variable, returnValueObj];
-          } else {
+              return [variable, returnValueObj];
+            } else {
+              return [variable, { raw: value }];
+            }
+
+          case 'date':
+            const dateMoments = moments[variable];
+            const { min: dateMin, max: dateMax } = isDatetime(dateMoments)
+              ? dateMoments
+              : { min: 0, max: 1 };
+
+            if (_.isNumber(value) && dateMin && dateMax) {
+              const luxonObject = DateTime.fromMillis(value);
+              const iso = luxonObject.toISODate();
+              const locale = luxonObject.toLocaleString(
+                dateFormatting || DateTime.DATETIME_MED
+              );
+
+              const returnObjDate: DatetimeDatum = {
+                dateTime: luxonObject,
+                iso,
+                locale,
+                raw: value,
+                scaled: (value - dateMin) / (dateMax - dateMin)
+              };
+
+              return [variable, returnObjDate];
+            } else {
+              return [variable, { raw: value }];
+            }
+
+          case 'categorical':
             return [variable, { raw: value }];
-          }
+        }
+      })
+    );
 
-        case 'date':
-          const dateMoments = moments[variable];
-          const { min: dateMin, max: dateMax } = isDatetime(dateMoments)
-            ? dateMoments
-            : { min: 0, max: 1 };
-
-          if (_.isNumber(value) && dateMin && dateMax) {
-            const luxonObject = DateTime.fromMillis(value);
-            const iso = luxonObject.toISODate();
-            const locale = luxonObject.toLocaleString(
-              dateFormatting || DateTime.DATETIME_MED
-            );
-
-            const returnObjDate: DatetimeDatum = {
-              dateTime: luxonObject,
-              iso,
-              locale,
-              raw: value,
-              scaled: (value - dateMin) / (dateMax - dateMin)
-            };
-
-            return [variable, returnObjDate];
-          } else {
-            return [variable, { raw: value }];
-          }
-
-        case 'categorical':
-          return [variable, { raw: value }];
-      }
-    })
-  );
-
-  return processedSnapshot;
+    return processedSnapshot;
+  };
 }
