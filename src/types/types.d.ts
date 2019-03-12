@@ -37,3 +37,19 @@ interface InferObject {
 interface MomentsObject {
   readonly [variable: string]: MomentsType;
 }
+
+interface ContinuousDatum {
+  raw: number;
+  scaled: number;
+}
+
+interface CategoricalDatum {
+  raw: string;
+}
+
+interface DatetimeDatum {
+  raw: number;
+  iso: string;
+  locale: string;
+  dateTime: DateTime;
+}
