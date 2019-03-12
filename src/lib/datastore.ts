@@ -79,10 +79,7 @@ export function dataStoreFactory(
   const moments = calculateMoments(filledDataSet, inferTypes);
   const modelName = name || 'dataStore';
 
-  const datumStore = types.model(
-    'datumStore',
-    generateDatumModel(keysArray, inferTypes, moments)
-  );
+  const datumStore = types.model('datumStore', generateDatumModel(keysArray));
 
   const instanceData = filledDataSet.map(datum => datumStore.create(datum));
 
