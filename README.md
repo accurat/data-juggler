@@ -15,17 +15,17 @@ The usage can be easily seen from the test, assume you are fetching some (csv li
 
 ```javascript
 data = [
-  { a: 3, b: 'mamma', d: 1552397833139 },
-  { a: 2, b: 'papà', c: 2, d: 1552397832139 },
-  { a: 1.5, b: 'cugino', c: 3, d: 15523912333139 },
-  { a: 1, b: 'papà', c: 4 }
+  { type: 'mamma', value: 3, time: 1552397833139 },
+  { type: 'papà', value: 2, connectionsCount: 2, time: 1552397832139 },
+  { type: 'cugino', value: 1.5, connectionsCount: 3, time: 15523912333139 },
+  { type: 'papà', value: 1, connectionsCount: 4 }
 ];
 
 types = {
-  a: 'continuous',
-  b: 'categorical',
-  c: 'continuous',
-  d: 'date'
+  type: 'categorical',
+  value: 'continuous',
+  connectionsCount: 'continuous',
+  time: 'date'
 };
 ```
 
@@ -35,8 +35,9 @@ Then you can just launch the `dataStoreFactory` function with a name and teh sam
 import { DateTime } from 'luxon';
 
 const dataStore = dataStoreFactory('dataStore', data, types);
-const d = dataStore.d;
-const dPrime = {
+
+const dFirst = dataStore.dataset[0].time; // Access the `time` column of the first datum
+const dFirstExpected = {
   dateTime: DateTime.fromMillis(1552397833139),
   iso: '2019-03-12',
   locale: 'Mar 12, 2019, 2:37 PM',
@@ -44,7 +45,7 @@ const dPrime = {
   scaled: 1
 };
 
-assert(d[0] === dPrime);
+assertDeepEqual(dFirst, dFirstExpected);
 
 // All good! And much more that you can discover yourself by reading lib... :)
 ```
