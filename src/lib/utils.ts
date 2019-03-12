@@ -5,11 +5,12 @@ import { IMaybeNull, IType, types } from 'mobx-state-tree';
 import { isCategorical, isContinous, isDatetime } from '../types/utils';
 
 // tslint:disable:no-if-statement
+// tslint:disable:no-this
 // Fuck you tslint, watch me us those fucking if statements.
 
 interface ContinuousDatum {
   raw: number;
-  scaled: number;
+  scaled: number | null;
 }
 
 interface CategoricalDatum {
@@ -21,7 +22,7 @@ interface DatetimeDatum {
   iso: string;
   locale: string;
   dateTime: DateTime;
-  scaled: number;
+  scaled: number | null;
 }
 
 const updateMin = (value: number, min: number | null) =>
@@ -122,10 +123,15 @@ export function processDatumSnapshotFactory(
             const { min: valueMin, max: valueMax } = isContinous(contMoments)
               ? contMoments
               : { min: 0, max: 1 };
-            if (_.isNumber(value) && valueMax && valueMin) {
+            if (_.isNumber(value)) {
               const returnValueObj: ContinuousDatum = {
                 raw: value,
-                scaled: (value - valueMin) / (valueMax - valueMin)
+                get scaled(): number | null {
+                  if (!valueMin || !valueMax) {
+                    return null;
+                  }
+                  return (this.raw - valueMin) / (valueMax - valueMin);
+                }
               };
 
               return [variable, returnValueObj];
@@ -140,18 +146,26 @@ export function processDatumSnapshotFactory(
               : { min: 0, max: 1 };
 
             if (_.isNumber(value) && dateMin && dateMax) {
-              const luxonObject = DateTime.fromMillis(value);
-              const iso = luxonObject.toISODate();
-              const locale = luxonObject.toLocaleString(
-                dateFormatting || DateTime.DATETIME_MED
-              );
-
               const returnObjDate: DatetimeDatum = {
-                dateTime: luxonObject,
-                iso,
-                locale,
                 raw: value,
-                scaled: (value - dateMin) / (dateMax - dateMin)
+                get dateTime(): DateTime {
+                  return DateTime.fromMillis(this.raw);
+                },
+                get iso(): string {
+                  return this.dateTime.toISODate();
+                },
+
+                get locale(): string {
+                  return this.dateTime.toLocaleString(
+                    dateFormatting || DateTime.DATETIME_MED
+                  );
+                },
+                get scaled(): number | null {
+                  if (!dateMin || !dateMax) {
+                    return null;
+                  }
+                  return (this.raw - dateMin) / (dateMax - dateMin);
+                }
               };
 
               return [variable, returnObjDate];
