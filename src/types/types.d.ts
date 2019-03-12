@@ -1,31 +1,22 @@
+type ValueOf<T> = T[keyof T];
+
 interface GenericDatum {
-  readonly [key: string]:
-    | number
-    | string
-    | boolean
-    | ReadonlyArray<number>
-    | ReadonlyArray<string>
-    | GenericDatum
-    | null;
+  readonly [key: string]: number | string | boolean | null;
 }
 
-type GenericDataSet = ReadonlyArray<GenericDatum>;
-
 interface NormalizingContinuous {
-  readonly mean: number;
-  readonly min: number;
-  readonly max: number;
+  readonly sum: number;
+  readonly min: number | null;
+  readonly max: number | null;
 }
 
 interface NormalizingDatetime {
-  readonly min: number;
-  readonly max: number;
+  readonly min: number | null;
+  readonly max: number | null;
 }
 
 interface NormalizingCategorical {
-  readonly frequencies: ReadonlyArray<
-    ReadonlyArray<{ readonly [variable: string]: number }>
-  >;
+  readonly frequencies: { readonly [instance: string]: number };
 }
 
 interface MapTypeInfer {
@@ -35,7 +26,14 @@ interface MapTypeInfer {
 }
 
 type InferType = keyof MapTypeInfer;
+type MomentsType = ValueOf<MapTypeInfer>;
 
 type MapSchema<T extends InferType> = MapTypeInfer[T];
 
-interface InferObject { readonly [key: string]: InferType }
+interface InferObject {
+  readonly [key: string]: InferType;
+}
+
+interface MomentsObject {
+  readonly [variable: string]: MomentsType;
+}
