@@ -32,14 +32,14 @@ types = {
 Then you can just launch the `dataStoreFactory` function with a name and teh sample data and instance types, and enjoy a beutiful mobx-state-tree store with everything that you need in it (this is, at least for now, a lie).
 
 ```javascript
-import { DateTime } from 'luxon';
+import dayjs from 'dayjs';
 
 const dataStore = dataStoreFactory('dataStore', data, types);
 const d = dataStore.d;
 const dPrime = {
-  dateTime: DateTime.fromMillis(1552397833139),
-  iso: '2019-03-12',
-  locale: 'Mar 12, 2019, 2:37 PM',
+  dateTime: dayjs(1552397833139),
+  isValid: true,
+  iso: '2019-03-12T14:37:13+01:00',
   raw: 1552397833139,
   scaled: 1
 };

@@ -1,8 +1,8 @@
 // tslint:disable:no-expression-statement
 // tslint:disable:no-console
 import test from 'ava';
+import dayjs from 'dayjs';
 import { range } from 'lodash';
-import { DateTime } from 'luxon';
 import {
   calculateMoments,
   dataStoreFactory,
@@ -87,9 +87,9 @@ test('dataStore', t => {
   ]);
 
   const firstSampleDatum = {
-    dateTime: DateTime.fromMillis(1552397833139),
-    iso: '2019-03-12',
-    locale: 'Mar 12, 2019, 2:37 PM',
+    dateTime: dayjs(1552397833139),
+    isValid: true,
+    iso: '2019-03-12T14:37:13+01:00',
     raw: 1552397833139,
     scaled: 1
   };

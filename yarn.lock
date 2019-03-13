@@ -464,11 +464,6 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.122.tgz#3e31394c38cf1e5949fb54c1192cbc406f152c6c"
   integrity sha512-9IdED8wU93ty8gP06ninox+42SBSJHp2IAamsSYMUY76mshRTeUsid/gtbl8ovnOwy8im41ib4cxTiIYMXGKew==
 
-"@types/luxon@^1.11.1":
-  version "1.11.1"
-  resolved "https://registry.yarnpkg.com/@types/luxon/-/luxon-1.11.1.tgz#819d730cf8ada52bec9c4a1d94347d1250f22c5d"
-  integrity sha512-XBHQ7rzpOHyJudEQcMyoT67Np61FTb6S2jWqWQER/U7H2NAS+dpC8wv5T+6ygV5g/yJQdaojQbsJQiweool0Aw==
-
 "@types/marked@^0.4.0":
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/@types/marked/-/marked-0.4.2.tgz#64a89e53ea37f61cc0f3ee1732c555c2dbf6452f"
@@ -1505,6 +1500,11 @@ dateformat@^3.0.0:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/dateformat/-/dateformat-3.0.3.tgz#a6e37499a4d9a9cf85ef5872044d62901c9889ae"
   integrity sha512-jyCETtSl3VMZMWeRo7iY1FL19ges1t55hMo5yaam4Jrsm5EPL89UQkoQRyiI+Yf4k8r2ZpdngkV8hr1lIdjb3Q==
+
+dayjs@^1.8.10:
+  version "1.8.10"
+  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.8.10.tgz#fc35a976ccac2a9c44b50485a06c4a5ecf5d1b37"
+  integrity sha512-U+7kBBkJzPWww0vNeMkaBeJwnkivTACoajm+bTfwparjFcPI6/5JSQN40WVnX6yCsm20oGf1SkMkIIp4m/boAw==
 
 debug@^2.1.2, debug@^2.2.0, debug@^2.3.3:
   version "2.6.9"
@@ -3084,11 +3084,6 @@ lru-cache@^4.0.0, lru-cache@^4.0.1:
   dependencies:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
-
-luxon@^1.11.4:
-  version "1.11.4"
-  resolved "https://registry.yarnpkg.com/luxon/-/luxon-1.11.4.tgz#c5d8c1f795cee26c162e95a4686632abcec50442"
-  integrity sha512-zTQ1DCShOGHIdNpa56yjDpUCowKDsBqeFVuEG2XBcrAM2udxN0g3N5RTZzbw94OkDiBgECsuDgLNnQTo73yghw==
 
 make-dir@^1.0.0, make-dir@^1.3.0:
   version "1.3.0"

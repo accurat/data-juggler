@@ -6,7 +6,8 @@ import {
   min as _min,
   toPairs
 } from 'lodash';
-import { DateTime } from 'luxon';
+
+import dayjs, { Dayjs } from 'dayjs';
 
 import { IMaybeNull, IType, types } from 'mobx-state-tree';
 import { isCategorical, isContinous, isDatetime } from '../types/utils';
@@ -27,9 +28,9 @@ export interface CategoricalDatum {
 export interface DatetimeDatum {
   raw: number;
   iso: string;
-  locale: string;
-  dateTime: DateTime;
+  dateTime: Dayjs;
   scaled: number | null;
+  isValid: boolean;
 }
 
 const updateMin = (value: number, min: number | null) =>
@@ -111,7 +112,7 @@ export function generateDatumModel(datumKeys: string[]): FrozenObject {
 export function processDatumSnapshotFactory(
   inferObject: InferObject,
   moments: MomentsObject,
-  dateFormatting?: Intl.DateTimeFormatOptions
+  dateFormatting?: string
 ): (
   snapshot: GenericDatum
 ) => {
@@ -155,17 +156,15 @@ export function processDatumSnapshotFactory(
             if (isNumber(value) && dateMin && dateMax) {
               const returnObjDate: DatetimeDatum = {
                 raw: value,
-                get dateTime(): DateTime {
-                  return DateTime.fromMillis(this.raw);
+                get dateTime(): Dayjs {
+                  return dayjs(this.raw);
                 },
-                get iso(): string {
-                  return this.dateTime.toISODate();
+                get isValid(): boolean {
+                  return this.dateTime.isValid();
                 },
 
-                get locale(): string {
-                  return this.dateTime.toLocaleString(
-                    dateFormatting || DateTime.DATETIME_MED
-                  );
+                get iso(): string {
+                  return this.dateTime.format(dateFormatting);
                 },
                 get scaled(): number | null {
                   if (!dateMin || !dateMax) {
