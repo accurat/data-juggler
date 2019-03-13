@@ -37,3 +37,16 @@ interface InferObject {
 interface MomentsObject {
   readonly [variable: string]: MomentsType;
 }
+
+interface DatetimeParse {
+  generate?: (unix: number) => unknown;
+  format: ((s: unknown) => string) | string;
+}
+
+interface CategoricalParser {
+  format: (n: number) => number | string;
+}
+
+interface ContinuousParser {
+  format: (categoricalVariableInstance: string) => string;
+}

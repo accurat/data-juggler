@@ -11,6 +11,8 @@ import {
   populateNullData
 } from './datastore';
 
+import { DatetimeDatum, ParseObjectType } from './utils';
+
 const DEFAULT_DATE = 1552397833139;
 const DATES_D = range(4).map(i => DEFAULT_DATE - i * 10000);
 
@@ -95,4 +97,41 @@ test('dataStore', t => {
   };
 
   t.deepEqual(firstSampleDatum, d[0]);
+});
+
+test('Custom formatter', t => {
+  const formatter: ParseObjectType = {
+    categorical: {
+      format: (s: string) => s
+    },
+    continuous: {
+      format: (n: number) => `${n} potatoes!`
+    },
+    date: {
+      format: 'MM-DD-YYYY'
+    }
+  };
+
+  const dataStore = dataStoreFactory(
+    'dataStore',
+    FIRST_SAMPLE_DATA,
+    INSTANCE_TYPES,
+    formatter
+  );
+
+  const formattedDateTime: DatetimeDatum = {
+    dateTime: dayjs(1552397833139),
+    isValid: true,
+    iso: '03-12-2019',
+    raw: 1552397833139,
+    scaled: 1
+  };
+
+  const firstDateInstanceWithGetter = dataStore.d[0];
+  const firstDateInstanceNormal = dataStore.data[0].d;
+  t.notThrows(() =>
+    dataStoreFactory('dataStore', FIRST_SAMPLE_DATA, INSTANCE_TYPES, formatter)
+  );
+  t.deepEqual(formattedDateTime, firstDateInstanceWithGetter);
+  t.deepEqual(formattedDateTime, firstDateInstanceNormal);
 });

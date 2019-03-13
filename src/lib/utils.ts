@@ -15,6 +15,7 @@ import { isCategorical, isContinous, isDatetime } from '../types/utils';
 
 // tslint:disable:no-if-statement
 // tslint:disable:no-this
+// tslint:disable:no-expression-statement
 // Fuck you tslint, watch me us those fucking if statements.
 
 export interface ContinuousDatum {
@@ -39,19 +40,8 @@ export interface DatetimeDatum {
 // TODO: correctly type the conditional format based on general
 export type ParseObjectType = {
   [P in ValueOf<InferObject>]?: P extends 'date'
-    ? {
-        generate: (unix: number) => unknown;
-        format: ((s: unknown) => string) | string;
-      }
-    : (P extends 'continuous'
-        ? {
-            format: (n: number) => number | string;
-          }
-        : {
-            format: (
-              categoricalVariableInstance: string | number | boolean | null
-            ) => string;
-          })
+    ? DatetimeParse
+    : (P extends 'continuous' ? CategoricalParser : ContinuousParser)
 };
 
 const updateMin = (value: number, min: number | null) =>
@@ -160,13 +150,18 @@ export function processDatumSnapshotFactory(
                     return null;
                   }
                   return (this.raw - valueMin) / (valueMax - valueMin);
-                },
-                get formatted(): string | number {
-                  return parseObject && parseObject.continuous
-                    ? parseObject.continuous.format(this.raw)
-                    : this.raw;
                 }
               };
+
+              // TODO: this could be done without this property definition?
+              if (parseObject && parseObject.continuous) {
+                const parser = parseObject.continuous;
+                Object.defineProperty(returnValueObj, 'formatted', {
+                  get(): string | number {
+                    return parser.format(this.raw);
+                  }
+                });
+              }
 
               return [variable, returnValueObj];
             } else {
@@ -181,7 +176,7 @@ export function processDatumSnapshotFactory(
 
             if (isNumber(value) && dateMin && dateMax) {
               const generate =
-                parseObject && parseObject.date
+                parseObject && parseObject.date && parseObject.date.generate
                   ? parseObject.date.generate
                   : dayjs;
 
@@ -200,7 +195,7 @@ export function processDatumSnapshotFactory(
                   const format =
                     parseObject && parseObject.date && parseObject.date.format;
 
-                  if (dateTime instanceof Dayjs) {
+                  if (dayjs.isDayjs(dateTime)) {
                     return dateTime.format(
                       typeof format === 'string' ? format : undefined
                     );
@@ -227,12 +222,17 @@ export function processDatumSnapshotFactory(
             const stringValue = toString(value);
 
             const returnCatObj: CategoricalDatum = {
-              formatted:
-                parseObject && parseObject.categorical
-                  ? parseObject.categorical.format(stringValue)
-                  : stringValue,
               raw: stringValue
             };
+
+            if (parseObject && parseObject.categorical) {
+              const parser = parseObject.categorical;
+              Object.defineProperty(returnCatObj, 'formatted', {
+                get(): string | number {
+                  return parser.format(this.raw);
+                }
+              });
+            }
 
             return [variable, returnCatObj];
         }
@@ -244,5 +244,5 @@ export function processDatumSnapshotFactory(
 }
 
 function valiDate(dateObj: Dayjs | unknown): boolean {
-  return dateObj instanceof Dayjs ? dateObj.isValid() : false;
+  return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
 }
