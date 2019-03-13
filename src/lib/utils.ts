@@ -28,10 +28,20 @@ export interface CategoricalDatum {
 export interface DatetimeDatum {
   raw: number;
   iso: string;
-  dateTime: Dayjs;
+  dateTime: unknown;
   scaled: number | null;
   isValid: boolean;
 }
+
+// TODO: correctly type the conditional format based on general
+export type ParseObjectType = {
+  [P in ValueOf<InferObject>]?: P extends 'date'
+    ? {
+        generate: (unix: number) => unknown;
+        format: ((s: unknown) => string) | string;
+      }
+    : unknown
+};
 
 const updateMin = (value: number, min: number | null) =>
   isNull(min) ? value : _min([value, min]) || min;
@@ -112,7 +122,7 @@ export function generateDatumModel(datumKeys: string[]): FrozenObject {
 export function processDatumSnapshotFactory(
   inferObject: InferObject,
   moments: MomentsObject,
-  dateFormatting?: string
+  parseObject?: ParseObjectType
 ): (
   snapshot: GenericDatum
 ) => {
@@ -154,17 +164,35 @@ export function processDatumSnapshotFactory(
               : { min: 0, max: 1 };
 
             if (isNumber(value) && dateMin && dateMax) {
+              const generate =
+                parseObject && parseObject.date
+                  ? parseObject.date.generate
+                  : dayjs;
+
               const returnObjDate: DatetimeDatum = {
                 raw: value,
-                get dateTime(): Dayjs {
-                  return dayjs(this.raw);
+                get dateTime(): unknown {
+                  return generate(this.raw);
                 },
                 get isValid(): boolean {
-                  return this.dateTime.isValid();
+                  return valiDate(this.dateTime);
                 },
 
                 get iso(): string {
-                  return this.dateTime.format(dateFormatting);
+                  const dateTime = this.dateTime;
+
+                  const format =
+                    parseObject && parseObject.date && parseObject.date.format;
+
+                  if (dateTime instanceof Dayjs) {
+                    return dateTime.format(
+                      typeof format === 'string' ? format : undefined
+                    );
+                  } else {
+                    return typeof format !== 'string' && format
+                      ? format(dateTime)
+                      : '';
+                  }
                 },
                 get scaled(): number | null {
                   if (!dateMin || !dateMax) {
@@ -187,4 +215,8 @@ export function processDatumSnapshotFactory(
 
     return processedSnapshot;
   };
+}
+
+function valiDate(dateObj: Dayjs | unknown): boolean {
+  return dateObj instanceof Dayjs ? dateObj.isValid() : false;
 }

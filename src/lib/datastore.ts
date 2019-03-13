@@ -7,6 +7,7 @@ import {
   DatetimeDatum,
   generateDatumModel,
   generateNewMoments,
+  ParseObjectType,
   processDatumSnapshotFactory
 } from './utils';
 
@@ -17,7 +18,7 @@ export type DataProperty = Array<{
 /*
 continuous --> normalized: value between 0-1, display: two decimal places
 categorical --> one-hot label, display: = raw 
-date --> raw: unix, display: dd-mm-yyyy or given ISO format
+date --> raw: unix, display: dd-mm-yyyy or given ISO format 
 */
 
 const mapParams: MapTypeInfer = {
@@ -81,7 +82,8 @@ export function calculateMoments(
 export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
-  inferTypes: InferObject
+  inferTypes: InferObject,
+  parserObject?: ParseObjectType
 ): {
   [variable: string]:
     | Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>
@@ -94,7 +96,11 @@ export function dataStoreFactory(
   const moments = calculateMoments(filledDataSet, inferTypes);
   const modelName = name || 'dataStore';
 
-  const datumPreprocessor = processDatumSnapshotFactory(inferTypes, moments);
+  const datumPreprocessor = processDatumSnapshotFactory(
+    inferTypes,
+    moments,
+    parserObject
+  );
 
   const datumStore = types
     .model('datumStore', generateDatumModel(keysArray))
