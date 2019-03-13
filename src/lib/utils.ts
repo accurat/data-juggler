@@ -4,7 +4,8 @@ import {
   isNumber,
   max as _max,
   min as _min,
-  toPairs
+  toPairs,
+  toString
 } from 'lodash';
 
 import dayjs, { Dayjs } from 'dayjs';
@@ -24,6 +25,7 @@ export interface ContinuousDatum {
 
 export interface CategoricalDatum {
   raw: string;
+  formatted?: string;
 }
 
 export interface DatetimeDatum {
@@ -41,11 +43,15 @@ export type ParseObjectType = {
         generate: (unix: number) => unknown;
         format: ((s: unknown) => string) | string;
       }
-    : P extends 'continuous'
-    ? {
-        format: (n: number) => number | string;
-      }
-    : unknown
+    : (P extends 'continuous'
+        ? {
+            format: (n: number) => number | string;
+          }
+        : {
+            format: (
+              categoricalVariableInstance: string | number | boolean | null
+            ) => string;
+          })
 };
 
 const updateMin = (value: number, min: number | null) =>
@@ -218,7 +224,17 @@ export function processDatumSnapshotFactory(
             }
 
           case 'categorical':
-            return [variable, { raw: value }];
+            const stringValue = toString(value);
+
+            const returnCatObj: CategoricalDatum = {
+              formatted:
+                parseObject && parseObject.categorical
+                  ? parseObject.categorical.format(stringValue)
+                  : stringValue,
+              raw: stringValue
+            };
+
+            return [variable, returnCatObj];
         }
       })
     );
