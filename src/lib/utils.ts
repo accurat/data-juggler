@@ -16,7 +16,7 @@ import { isCategorical, isContinous, isDatetime } from '../types/utils';
 // tslint:disable:no-if-statement
 // tslint:disable:no-this
 // tslint:disable:no-expression-statement
-// Fuck you tslint, watch me us those fucking if statements.
+// Fuck you tslint, watch me use those fucking if statements.
 
 export interface ContinuousDatum {
   raw: number;

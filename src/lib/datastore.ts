@@ -79,17 +79,23 @@ export function calculateMoments(
   return momentsObject;
 }
 
+// tslint:disable:no-mixed-interface
+interface ReturnDataStoreFactory1 {
+  [variable: string]: Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>;
+}
+interface ReturnDataStoreFactory2 {
+  data: DataProperty;
+  stats: MomentsObject;
+}
+
+type ReturnDataStoreFactory = ReturnDataStoreFactory1 & ReturnDataStoreFactory2;
+
 export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
   inferTypes: InferObject,
   parserObject?: ParseObjectType
-): {
-  [variable: string]:
-    | Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>
-    | DataProperty;
-  data: DataProperty;
-} {
+): ReturnDataStoreFactory {
   // TODO - Better typing for this.
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
@@ -110,7 +116,8 @@ export function dataStoreFactory(
 
   const genericDataset = types
     .model(modelName, {
-      data: types.array(datumStore)
+      data: types.array(datumStore),
+      stats: types.frozen()
     })
     .extend(self => {
       const viewsVariableGetters = keysArray.reduce((acc, variable) => {
@@ -132,7 +139,8 @@ export function dataStoreFactory(
     });
 
   const dataSetInstance = genericDataset.create({
-    data: instanceData
+    data: instanceData,
+    stats: moments
   });
   return dataSetInstance;
 }
