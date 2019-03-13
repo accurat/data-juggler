@@ -19,6 +19,7 @@ import { isCategorical, isContinous, isDatetime } from '../types/utils';
 export interface ContinuousDatum {
   raw: number;
   scaled: number | null;
+  formatted?: string | number;
 }
 
 export interface CategoricalDatum {
@@ -39,6 +40,10 @@ export type ParseObjectType = {
     ? {
         generate: (unix: number) => unknown;
         format: ((s: unknown) => string) | string;
+      }
+    : P extends 'continuous'
+    ? {
+        format: (n: number) => number | string;
       }
     : unknown
 };
@@ -149,6 +154,11 @@ export function processDatumSnapshotFactory(
                     return null;
                   }
                   return (this.raw - valueMin) / (valueMax - valueMin);
+                },
+                get formatted(): string | number {
+                  return parseObject && parseObject.continuous
+                    ? parseObject.continuous.format(this.raw)
+                    : this.raw;
                 }
               };
 
