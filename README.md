@@ -9,6 +9,12 @@ This library abstracts that, normalizes, counts, calculates and does many ineffi
 
 ## Usage
 
+### Installations
+
+'''
+yarn add mst-datastore
+'''
+
 ### Basic usage
 
 The usage can be easily seen from the test, assume you are fetching some (csv like for now) data from an API and the columns have the following "type":
