@@ -132,7 +132,7 @@ type DateFormattingFunction = (datum: dayjs.Dayjs) => string;
 export interface ParseObjectType {
   [variable: string]: Array<{
     name: string;
-    formatting: DateFormattingFunction | ContinuousFormattingFunction;
+    formatter: DateFormattingFunction | ContinuousFormattingFunction;
   }>;
 }
 
@@ -187,11 +187,11 @@ export function processDatumSnapshotFactory(
                 }
               };
 
-              customVariableParser.forEach(({ name, formatting }) => {
-                if (!isFnForDates(formatting)) {
+              customVariableParser.forEach(({ name, formatter }) => {
+                if (!isFnForDates(formatter)) {
                   Object.defineProperty(returnValueObj, name, {
                     get(): string | number {
-                      return formatting(this.raw, valueMin || 0, valueMax || 0);
+                      return formatter(this.raw, valueMin || 0, valueMax || 0);
                     }
                   });
                 }
@@ -228,17 +228,17 @@ export function processDatumSnapshotFactory(
                 }
               };
 
-              customVariableParser.forEach(({ name, formatting }) => {
-                if (!isFnForDates(formatting)) {
+              customVariableParser.forEach(({ name, formatter }) => {
+                if (!isFnForDates(formatter)) {
                   Object.defineProperty(returnObjDate, name, {
                     get(): string | number {
-                      return formatting(this.raw, dateMin, dateMax);
+                      return formatter(this.raw, dateMin, dateMax);
                     }
                   });
                 } else {
                   Object.defineProperty(returnObjDate, name, {
                     get(): string {
-                      return formatting(this.dateTime);
+                      return formatter(this.dateTime);
                     }
                   });
                 }
@@ -255,11 +255,11 @@ export function processDatumSnapshotFactory(
               raw: stringValue
             };
 
-            customVariableParser.forEach(({ name, formatting }) => {
-              if (!isFnForDates(formatting)) {
+            customVariableParser.forEach(({ name, formatter }) => {
+              if (!isFnForDates(formatter)) {
                 Object.defineProperty(returnCatObj, name, {
                   get(): string | number {
-                    return formatting(this.raw);
+                    return formatter(this.raw);
                   }
                 });
               }
