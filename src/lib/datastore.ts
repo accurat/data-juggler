@@ -1,6 +1,7 @@
 import { fromPairs, toPairs } from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
+import { GenericDatum } from '../types/utils';
 import {
   CategoricalDatum,
   ContinuousDatum,

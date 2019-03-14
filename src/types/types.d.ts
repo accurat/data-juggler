@@ -1,9 +1,5 @@
 type ValueOf<T> = T[keyof T];
 
-interface GenericDatum {
-  readonly [key: string]: number | string | boolean | null;
-}
-
 interface NormalizingContinuous {
   readonly sum: number;
   readonly min: number | null;

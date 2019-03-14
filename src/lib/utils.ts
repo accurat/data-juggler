@@ -13,8 +13,13 @@ import {
 import dayjs from 'dayjs';
 
 import { IMaybeNull, IType, types } from 'mobx-state-tree';
-import { number } from 'mobx-state-tree/dist/internal';
-import { isCategorical, isContinous, isDatetime } from '../types/utils';
+
+import {
+  GenericDatum,
+  isCategorical,
+  isContinous,
+  isDatetime
+} from '../types/utils';
 
 // tslint:disable:no-if-statement
 // tslint:disable:no-this
@@ -135,7 +140,7 @@ type GenericFormattingFunction = (
   row?: {
     [variable: string]: CategoricalDatum | ContinuousDatum | DatetimeDatum;
   }
-) => number | string | dayjs.Dayjs;
+) => number | string | dayjs.Dayjs | null;
 
 export interface ParseObjectType {
   [variable: string]: Array<{
@@ -187,7 +192,9 @@ export function processDatumSnapshotFactory(
 
               customVariableParser.forEach(({ name, formatter }) => {
                 Object.defineProperty(returnValueObj, name, {
-                  get(): string | number | dayjs.Dayjs {
+                  configurable: true,
+                  enumerable: true,
+                  get(): string | number | dayjs.Dayjs | null {
                     return formatter(returnValueObj, {
                       max: valueMax || 0,
                       min: valueMin || 0,
@@ -230,7 +237,9 @@ export function processDatumSnapshotFactory(
 
               customVariableParser.forEach(({ name, formatter }) => {
                 Object.defineProperty(returnObjDate, name, {
-                  get(): string | number | dayjs.Dayjs {
+                  configurable: true,
+                  enumerable: true,
+                  get(): string | number | dayjs.Dayjs | null {
                     return formatter(returnObjDate, {
                       max: dateMax || 0,
                       min: dateMin || 0
@@ -257,7 +266,9 @@ export function processDatumSnapshotFactory(
 
             customVariableParser.forEach(({ name, formatter }) => {
               Object.defineProperty(returnCatObj, name, {
-                get(): string | number | dayjs.Dayjs {
+                configurable: true,
+                enumerable: true,
+                get(): string | number | dayjs.Dayjs | null {
                   return formatter(this.raw, { frequencies });
                 }
               });
