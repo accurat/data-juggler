@@ -121,17 +121,18 @@ function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
   return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
 }
 
-type ParsingFunction = (
+type ContinuousFormattingFunction = (
   datum: number | string,
   min?: number,
   max?: number
 ) => number | string;
+
 type DateFormattingFunction = (datum: dayjs.Dayjs) => string;
 
 export interface ParseObjectType {
   [variable: string]: Array<{
     name: string;
-    formatting: DateFormattingFunction | ParsingFunction;
+    formatting: DateFormattingFunction | ContinuousFormattingFunction;
   }>;
 }
 
@@ -142,7 +143,7 @@ function isFnForDates(
   try {
     misteryFn(dayjs());
     return true;
-  } catch (_) {
+  } catch {
     return false;
   }
 }
@@ -174,6 +175,7 @@ export function processDatumSnapshotFactory(
             const { min: valueMin, max: valueMax } = isContinous(contMoments)
               ? contMoments
               : { min: 0, max: 1 };
+
             if (isNumber(value)) {
               const returnValueObj: ContinuousDatum = {
                 raw: value,
@@ -189,7 +191,7 @@ export function processDatumSnapshotFactory(
                 if (!isFnForDates(formatting)) {
                   Object.defineProperty(returnValueObj, name, {
                     get(): string | number {
-                      return formatting(this.raw);
+                      return formatting(this.raw, valueMin || 0, valueMax || 0);
                     }
                   });
                 }
@@ -230,7 +232,7 @@ export function processDatumSnapshotFactory(
                 if (!isFnForDates(formatting)) {
                   Object.defineProperty(returnObjDate, name, {
                     get(): string | number {
-                      return formatting(this.raw);
+                      return formatting(this.raw, dateMin, dateMax);
                     }
                   });
                 } else {
@@ -249,7 +251,6 @@ export function processDatumSnapshotFactory(
 
           case 'categorical':
             const stringValue = toString(value);
-
             const returnCatObj: CategoricalDatum = {
               raw: stringValue
             };
