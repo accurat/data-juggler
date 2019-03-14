@@ -1,4 +1,4 @@
-# mst-data-store
+# mst-datastore
 
 This library serves little purpose, like all of us and everything we do, but is a bit covered and tested, as you can see.
 
