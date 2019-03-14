@@ -18,17 +18,18 @@ import { isCategorical, isContinous, isDatetime } from '../types/utils';
 // tslint:disable:no-if-statement
 // tslint:disable:no-this
 // tslint:disable:no-expression-statement
+// tslint:disable:no-mixed-interface
 // Fuck you tslint, watch me use those fucking if statements.
 
 export interface ContinuousDatum {
   raw: number;
   scaled: number | null;
-  formatted?: string | number;
+  [customForms: string]: number | string | null;
 }
 
 export interface CategoricalDatum {
   raw: string;
-  formatted?: string;
+  [customForms: string]: number | string | null;
 }
 
 export interface DatetimeDatum {
@@ -37,6 +38,7 @@ export interface DatetimeDatum {
   dateTime: dayjs.Dayjs;
   scaled: number | null;
   isValid: boolean;
+  [customForms: string]: number | string | null | dayjs.Dayjs | boolean;
 }
 
 const updateMin = (value: number, min: number | null) =>
@@ -121,24 +123,28 @@ function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
   return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
 }
 
+interface MinMax {
+  min: number;
+  max: number;
+}
+
 type ContinuousFormattingFunction = (
-  datum: number | string,
-  min?: number,
-  max?: number
+  datum: number,
+  minMax: MinMax
 ) => number | string;
 
-type DateFormattingFunction = (datum: dayjs.Dayjs) => string;
+type DateFormattingFunction = (day: dayjs.Dayjs) => string;
 
 export interface ParseObjectType {
   [variable: string]: Array<{
     name: string;
-    formatter: DateFormattingFunction | ContinuousFormattingFunction;
+    formatter: ContinuousFormattingFunction | DateFormattingFunction;
   }>;
 }
 
 // FIXME: please
 function isFnForDates(
-  misteryFn: (arg: any) => unknown
+  misteryFn: (arg: any, ...args: any) => unknown
 ): misteryFn is DateFormattingFunction {
   try {
     misteryFn(dayjs());
@@ -191,7 +197,10 @@ export function processDatumSnapshotFactory(
                 if (!isFnForDates(formatter)) {
                   Object.defineProperty(returnValueObj, name, {
                     get(): string | number {
-                      return formatter(this.raw, valueMin || 0, valueMax || 0);
+                      return formatter(this.raw, {
+                        max: valueMax || 0,
+                        min: valueMin || 0
+                      });
                     }
                   });
                 }
@@ -232,7 +241,10 @@ export function processDatumSnapshotFactory(
                 if (!isFnForDates(formatter)) {
                   Object.defineProperty(returnObjDate, name, {
                     get(): string | number {
-                      return formatter(this.raw, dateMin, dateMax);
+                      return formatter(this.raw, {
+                        max: dateMax,
+                        min: dateMin
+                      });
                     }
                   });
                 } else {
@@ -259,7 +271,7 @@ export function processDatumSnapshotFactory(
               if (!isFnForDates(formatter)) {
                 Object.defineProperty(returnCatObj, name, {
                   get(): string | number {
-                    return formatter(this.raw);
+                    return formatter(this.raw, { min: 0, max: 0 });
                   }
                 });
               }
