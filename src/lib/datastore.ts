@@ -15,12 +15,6 @@ export type DataProperty = Array<{
   [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
 }>;
 
-/*
-continuous --> normalized: value between 0-1, display: two decimal places
-categorical --> one-hot label, display: = raw 
-date --> raw: unix, display: dd-mm-yyyy or given ISO format 
-*/
-
 const mapParams: MapTypeInfer = {
   categorical: { frequencies: {} },
   continuous: { min: null, max: null, sum: 0 },
