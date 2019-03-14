@@ -71,17 +71,20 @@ You can also pass a custom formatter for each column type (in the next PR you wi
 
 ```javascript
 
-const formatter = {
-  categorical: {
-    format: (s: string) => s
+formatter = {
+  height: [{
+    property: 'feet',
+    compute: (datum) => datum * 0.0328084
   },
-  continuous: {
-    format: (n: number) => `${n} cm`
-  },
-  date: {
-    format: 'MM-DD-YYYY'
-  }
-};
+  {
+    property: 'rescaled',
+    compute: (datum, min, max) => datum / max
+  }],
+  timeOfMeasure: [{
+    property: 'year',
+    compute: (day) => day.format('YYYY')
+  }]
+}
 
 //  if we look for the same instance as before
 
@@ -92,12 +95,7 @@ instance === {
     raw: 190,
     scaled: 1,
     // newly added
-    formatted: "190 cm"
-  },
-  gender: {
-    raw: 'male',
-    // newly added
-    formatted: "male"
+    feet: 6,233596
   },
   timeOfMeasure: {
     dateTime: // the day js instance of the dataset,
@@ -105,7 +103,7 @@ instance === {
     raw: 1552397832139,
     scaled: 1
     // newly added
-    iso: '01-12-2019',
+    year: '2019',
   }
 }
 
