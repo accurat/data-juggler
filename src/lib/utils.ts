@@ -13,6 +13,7 @@ import {
 import dayjs from 'dayjs';
 
 import { IMaybeNull, IType, types } from 'mobx-state-tree';
+import { number } from 'mobx-state-tree/dist/internal';
 import { isCategorical, isContinous, isDatetime } from '../types/utils';
 
 // tslint:disable:no-if-statement
@@ -123,35 +124,24 @@ function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
   return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
 }
 
-interface MinMax {
-  min: number;
-  max: number;
-}
-
-type ContinuousFormattingFunction = (
-  datum: number,
-  minMax: MinMax
-) => number | string;
-
-type DateFormattingFunction = (day: dayjs.Dayjs) => string;
+type GenericFormattingFunction = (
+  datum: CategoricalDatum | ContinuousDatum | DatetimeDatum,
+  stats?: {
+    min?: number;
+    max?: number;
+    frequencies?: { [cat: string]: number };
+    sum?: number;
+  },
+  row?: {
+    [variable: string]: CategoricalDatum | ContinuousDatum | DatetimeDatum;
+  }
+) => number | string | dayjs.Dayjs;
 
 export interface ParseObjectType {
   [variable: string]: Array<{
     name: string;
-    formatter: ContinuousFormattingFunction | DateFormattingFunction;
+    formatter: GenericFormattingFunction;
   }>;
-}
-
-// FIXME: please
-function isFnForDates(
-  misteryFn: (arg: any, ...args: any) => unknown
-): misteryFn is DateFormattingFunction {
-  try {
-    misteryFn(dayjs());
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function processDatumSnapshotFactory(
@@ -172,15 +162,17 @@ export function processDatumSnapshotFactory(
 
         const customVariableParser =
           !isUndefined(parseObject) && has(parseObject, variable)
-            ? parseObject.variable
+            ? parseObject[variable]
             : [];
 
         switch (inference) {
           case 'continuous':
             const contMoments = moments[variable];
-            const { min: valueMin, max: valueMax } = isContinous(contMoments)
+            const { min: valueMin, max: valueMax, sum } = isContinous(
+              contMoments
+            )
               ? contMoments
-              : { min: 0, max: 1 };
+              : { min: 0, max: 1, sum: 1 };
 
             if (isNumber(value)) {
               const returnValueObj: ContinuousDatum = {
@@ -194,16 +186,15 @@ export function processDatumSnapshotFactory(
               };
 
               customVariableParser.forEach(({ name, formatter }) => {
-                if (!isFnForDates(formatter)) {
-                  Object.defineProperty(returnValueObj, name, {
-                    get(): string | number {
-                      return formatter(this.raw, {
-                        max: valueMax || 0,
-                        min: valueMin || 0
-                      });
-                    }
-                  });
-                }
+                Object.defineProperty(returnValueObj, name, {
+                  get(): string | number | dayjs.Dayjs {
+                    return formatter(returnValueObj, {
+                      max: valueMax || 0,
+                      min: valueMin || 0,
+                      sum
+                    });
+                  }
+                });
               });
 
               return [variable, returnValueObj];
@@ -238,22 +229,14 @@ export function processDatumSnapshotFactory(
               };
 
               customVariableParser.forEach(({ name, formatter }) => {
-                if (!isFnForDates(formatter)) {
-                  Object.defineProperty(returnObjDate, name, {
-                    get(): string | number {
-                      return formatter(this.raw, {
-                        max: dateMax,
-                        min: dateMin
-                      });
-                    }
-                  });
-                } else {
-                  Object.defineProperty(returnObjDate, name, {
-                    get(): string {
-                      return formatter(this.dateTime);
-                    }
-                  });
-                }
+                Object.defineProperty(returnObjDate, name, {
+                  get(): string | number | dayjs.Dayjs {
+                    return formatter(returnObjDate, {
+                      max: dateMax || 0,
+                      min: dateMin || 0
+                    });
+                  }
+                });
               });
 
               return [variable, returnObjDate];
@@ -267,14 +250,17 @@ export function processDatumSnapshotFactory(
               raw: stringValue
             };
 
+            const catMoments = moments[variable];
+            const { frequencies } = isCategorical(catMoments)
+              ? catMoments
+              : { frequencies: {} };
+
             customVariableParser.forEach(({ name, formatter }) => {
-              if (!isFnForDates(formatter)) {
-                Object.defineProperty(returnCatObj, name, {
-                  get(): string | number {
-                    return formatter(this.raw, { min: 0, max: 0 });
-                  }
-                });
-              }
+              Object.defineProperty(returnCatObj, name, {
+                get(): string | number | dayjs.Dayjs {
+                  return formatter(this.raw, { frequencies });
+                }
+              });
             });
 
             return [variable, returnCatObj];
