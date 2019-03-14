@@ -1,6 +1,6 @@
 {
   "name": "mst-datastore",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "A default data store for mobx-state-tree",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -56,7 +56,8 @@
     "dayjs": "^1.8.10",
     "lodash": "^4.17.11",
     "mobx": "^5.9.0",
-    "mobx-state-tree": "^3.10.2"
+    "mobx-state-tree": "^3.10.2",
+    "trash": "^5.0.0"
   },
   "devDependencies": {
     "@types/d3-scale": "^2.1.1",
