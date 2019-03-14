@@ -1,14 +1,16 @@
 import {
   fromPairs,
+  has,
   isNull,
   isNumber,
+  isUndefined,
   max as _max,
   min as _min,
   toPairs,
   toString
 } from 'lodash';
 
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
 import { IMaybeNull, IType, types } from 'mobx-state-tree';
 import { isCategorical, isContinous, isDatetime } from '../types/utils';
@@ -32,17 +34,10 @@ export interface CategoricalDatum {
 export interface DatetimeDatum {
   raw: number;
   iso: string;
-  dateTime: unknown;
+  dateTime: dayjs.Dayjs;
   scaled: number | null;
   isValid: boolean;
 }
-
-// TODO: correctly type the conditional format based on general
-export type ParseObjectType = {
-  [P in ValueOf<InferObject>]?: P extends 'date'
-    ? DatetimeParse
-    : (P extends 'continuous' ? CategoricalParser : ContinuousParser)
-};
 
 const updateMin = (value: number, min: number | null) =>
   isNull(min) ? value : _min([value, min]) || min;
@@ -120,6 +115,38 @@ export function generateDatumModel(datumKeys: string[]): FrozenObject {
   return storeObj;
 }
 
+// --- Processing the snapshot
+
+function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
+  return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
+}
+
+type ParsingFunction = (
+  datum: number | string,
+  min?: number,
+  max?: number
+) => number | string;
+type DateFormattingFunction = (datum: dayjs.Dayjs) => string;
+
+export interface ParseObjectType {
+  [variable: string]: Array<{
+    name: string;
+    formatting: DateFormattingFunction | ParsingFunction;
+  }>;
+}
+
+// FIXME: please
+function isFnForDates(
+  misteryFn: (arg: any) => unknown
+): misteryFn is DateFormattingFunction {
+  try {
+    misteryFn(dayjs());
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 export function processDatumSnapshotFactory(
   inferObject: InferObject,
   moments: MomentsObject,
@@ -135,6 +162,11 @@ export function processDatumSnapshotFactory(
     } = fromPairs(
       toPairs(snapshot).map(([variable, value]) => {
         const inference = inferObject[variable];
+
+        const customVariableParser =
+          !isUndefined(parseObject) && has(parseObject, variable)
+            ? parseObject.variable
+            : [];
 
         switch (inference) {
           case 'continuous':
@@ -153,15 +185,15 @@ export function processDatumSnapshotFactory(
                 }
               };
 
-              // TODO: this could be done without this property definition?
-              if (parseObject && parseObject.continuous) {
-                const parser = parseObject.continuous;
-                Object.defineProperty(returnValueObj, 'formatted', {
-                  get(): string | number {
-                    return parser.format(this.raw);
-                  }
-                });
-              }
+              customVariableParser.forEach(({ name, formatting }) => {
+                if (!isFnForDates(formatting)) {
+                  Object.defineProperty(returnValueObj, name, {
+                    get(): string | number {
+                      return formatting(this.raw);
+                    }
+                  });
+                }
+              });
 
               return [variable, returnValueObj];
             } else {
@@ -175,35 +207,16 @@ export function processDatumSnapshotFactory(
               : { min: 0, max: 1 };
 
             if (isNumber(value) && dateMin && dateMax) {
-              const generate =
-                parseObject && parseObject.date && parseObject.date.generate
-                  ? parseObject.date.generate
-                  : dayjs;
-
               const returnObjDate: DatetimeDatum = {
                 raw: value,
-                get dateTime(): unknown {
-                  return generate(this.raw);
+                get dateTime(): dayjs.Dayjs {
+                  return dayjs.unix(this.raw);
                 },
                 get isValid(): boolean {
                   return valiDate(this.dateTime);
                 },
-
                 get iso(): string {
-                  const dateTime = this.dateTime;
-
-                  const format =
-                    parseObject && parseObject.date && parseObject.date.format;
-
-                  if (dayjs.isDayjs(dateTime)) {
-                    return dateTime.format(
-                      typeof format === 'string' ? format : undefined
-                    );
-                  } else {
-                    return typeof format !== 'string' && format
-                      ? format(dateTime)
-                      : '';
-                  }
+                  return this.dateTime.format('DD-MM-YYYY');
                 },
                 get scaled(): number | null {
                   if (!dateMin || !dateMax) {
@@ -212,6 +225,22 @@ export function processDatumSnapshotFactory(
                   return (this.raw - dateMin) / (dateMax - dateMin);
                 }
               };
+
+              customVariableParser.forEach(({ name, formatting }) => {
+                if (!isFnForDates(formatting)) {
+                  Object.defineProperty(returnObjDate, name, {
+                    get(): string | number {
+                      return formatting(this.raw);
+                    }
+                  });
+                } else {
+                  Object.defineProperty(returnObjDate, name, {
+                    get(): string {
+                      return formatting(this.dateTime);
+                    }
+                  });
+                }
+              });
 
               return [variable, returnObjDate];
             } else {
@@ -225,14 +254,15 @@ export function processDatumSnapshotFactory(
               raw: stringValue
             };
 
-            if (parseObject && parseObject.categorical) {
-              const parser = parseObject.categorical;
-              Object.defineProperty(returnCatObj, 'formatted', {
-                get(): string | number {
-                  return parser.format(this.raw);
-                }
-              });
-            }
+            customVariableParser.forEach(({ name, formatting }) => {
+              if (!isFnForDates(formatting)) {
+                Object.defineProperty(returnCatObj, name, {
+                  get(): string | number {
+                    return formatting(this.raw);
+                  }
+                });
+              }
+            });
 
             return [variable, returnCatObj];
         }
@@ -241,8 +271,4 @@ export function processDatumSnapshotFactory(
 
     return processedSnapshot;
   };
-}
-
-function valiDate(dateObj: Dayjs | unknown): boolean {
-  return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
 }

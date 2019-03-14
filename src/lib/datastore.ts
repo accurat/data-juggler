@@ -79,7 +79,6 @@ export function calculateMoments(
   return momentsObject;
 }
 
-// tslint:disable:no-mixed-interface
 interface ReturnDataStoreFactory1 {
   [variable: string]: Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>;
 }
@@ -96,7 +95,7 @@ export function dataStoreFactory(
   inferTypes: InferObject,
   parserObject?: ParseObjectType
 ): ReturnDataStoreFactory {
-  // TODO - Better typing for this.
+  // TODO: Better typing for this.
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
   const moments = calculateMoments(filledDataSet, inferTypes);
