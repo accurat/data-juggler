@@ -53,16 +53,17 @@
   },
   "dependencies": {
     "@types/lodash": "^4.14.122",
-    "@types/luxon": "^1.11.1",
+    "dayjs": "^1.8.10",
     "lodash": "^4.17.11",
-    "luxon": "^1.11.4",
     "mobx": "^5.9.0",
     "mobx-state-tree": "^3.10.2"
   },
   "devDependencies": {
+    "@types/d3-scale": "^2.1.1",
     "ava": "1.0.0-beta.7",
     "codecov": "^3.1.0",
     "cz-conventional-changelog": "^2.1.0",
+    "d3-scale": "^2.2.2",
     "gh-pages": "^2.0.1",
     "npm-run-all": "^4.1.5",
     "nyc": "^13.1.0",

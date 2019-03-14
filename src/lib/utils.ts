@@ -1,35 +1,50 @@
 import {
   fromPairs,
+  has,
   isNull,
   isNumber,
+  isUndefined,
   max as _max,
   min as _min,
-  toPairs
+  toPairs,
+  toString
 } from 'lodash';
-import { DateTime } from 'luxon';
+
+import dayjs from 'dayjs';
 
 import { IMaybeNull, IType, types } from 'mobx-state-tree';
-import { isCategorical, isContinous, isDatetime } from '../types/utils';
+
+import {
+  GenericDatum,
+  isCategorical,
+  isContinous,
+  isDatetime
+} from '../types/utils';
 
 // tslint:disable:no-if-statement
 // tslint:disable:no-this
-// Fuck you tslint, watch me us those fucking if statements.
+// tslint:disable:no-expression-statement
+// tslint:disable:no-mixed-interface
+// Fuck you tslint, watch me use those fucking if statements.
 
 export interface ContinuousDatum {
   raw: number;
   scaled: number | null;
+  [customForms: string]: number | string | null;
 }
 
 export interface CategoricalDatum {
   raw: string;
+  [customForms: string]: number | string | null;
 }
 
 export interface DatetimeDatum {
   raw: number;
   iso: string;
-  locale: string;
-  dateTime: DateTime;
+  dateTime: dayjs.Dayjs;
   scaled: number | null;
+  isValid: boolean;
+  [customForms: string]: number | string | null | dayjs.Dayjs | boolean;
 }
 
 const updateMin = (value: number, min: number | null) =>
@@ -108,10 +123,36 @@ export function generateDatumModel(datumKeys: string[]): FrozenObject {
   return storeObj;
 }
 
+// --- Processing the snapshot
+
+function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
+  return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
+}
+
+type GenericFormattingFunction = (
+  datum: CategoricalDatum | ContinuousDatum | DatetimeDatum,
+  stats?: {
+    min?: number;
+    max?: number;
+    frequencies?: { [cat: string]: number };
+    sum?: number;
+  },
+  row?: {
+    [variable: string]: CategoricalDatum | ContinuousDatum | DatetimeDatum;
+  }
+) => number | string | dayjs.Dayjs | null;
+
+export interface ParseObjectType {
+  [variable: string]: Array<{
+    name: string;
+    formatter: GenericFormattingFunction;
+  }>;
+}
+
 export function processDatumSnapshotFactory(
   inferObject: InferObject,
   moments: MomentsObject,
-  dateFormatting?: Intl.DateTimeFormatOptions
+  parseObject?: ParseObjectType
 ): (
   snapshot: GenericDatum
 ) => {
@@ -124,12 +165,20 @@ export function processDatumSnapshotFactory(
       toPairs(snapshot).map(([variable, value]) => {
         const inference = inferObject[variable];
 
+        const customVariableParser =
+          !isUndefined(parseObject) && has(parseObject, variable)
+            ? parseObject[variable]
+            : [];
+
         switch (inference) {
           case 'continuous':
             const contMoments = moments[variable];
-            const { min: valueMin, max: valueMax } = isContinous(contMoments)
+            const { min: valueMin, max: valueMax, sum } = isContinous(
+              contMoments
+            )
               ? contMoments
-              : { min: 0, max: 1 };
+              : { min: 0, max: 1, sum: 1 };
+
             if (isNumber(value)) {
               const returnValueObj: ContinuousDatum = {
                 raw: value,
@@ -140,6 +189,20 @@ export function processDatumSnapshotFactory(
                   return (this.raw - valueMin) / (valueMax - valueMin);
                 }
               };
+
+              customVariableParser.forEach(({ name, formatter }) => {
+                Object.defineProperty(returnValueObj, name, {
+                  configurable: true,
+                  enumerable: true,
+                  get(): string | number | dayjs.Dayjs | null {
+                    return formatter(returnValueObj, {
+                      max: valueMax || 0,
+                      min: valueMin || 0,
+                      sum
+                    });
+                  }
+                });
+              });
 
               return [variable, returnValueObj];
             } else {
@@ -155,17 +218,14 @@ export function processDatumSnapshotFactory(
             if (isNumber(value) && dateMin && dateMax) {
               const returnObjDate: DatetimeDatum = {
                 raw: value,
-                get dateTime(): DateTime {
-                  return DateTime.fromMillis(this.raw);
+                get dateTime(): dayjs.Dayjs {
+                  return dayjs.unix(this.raw);
+                },
+                get isValid(): boolean {
+                  return valiDate(this.dateTime);
                 },
                 get iso(): string {
-                  return this.dateTime.toISODate();
-                },
-
-                get locale(): string {
-                  return this.dateTime.toLocaleString(
-                    dateFormatting || DateTime.DATETIME_MED
-                  );
+                  return this.dateTime.format('DD-MM-YYYY');
                 },
                 get scaled(): number | null {
                   if (!dateMin || !dateMax) {
@@ -175,13 +235,46 @@ export function processDatumSnapshotFactory(
                 }
               };
 
+              customVariableParser.forEach(({ name, formatter }) => {
+                Object.defineProperty(returnObjDate, name, {
+                  configurable: true,
+                  enumerable: true,
+                  get(): string | number | dayjs.Dayjs | null {
+                    return formatter(returnObjDate, {
+                      max: dateMax || 0,
+                      min: dateMin || 0
+                    });
+                  }
+                });
+              });
+
               return [variable, returnObjDate];
             } else {
               return [variable, { raw: value }];
             }
 
           case 'categorical':
-            return [variable, { raw: value }];
+            const stringValue = toString(value);
+            const returnCatObj: CategoricalDatum = {
+              raw: stringValue
+            };
+
+            const catMoments = moments[variable];
+            const { frequencies } = isCategorical(catMoments)
+              ? catMoments
+              : { frequencies: {} };
+
+            customVariableParser.forEach(({ name, formatter }) => {
+              Object.defineProperty(returnCatObj, name, {
+                configurable: true,
+                enumerable: true,
+                get(): string | number | dayjs.Dayjs | null {
+                  return formatter(this.raw, { frequencies });
+                }
+              });
+            });
+
+            return [variable, returnCatObj];
         }
       })
     );

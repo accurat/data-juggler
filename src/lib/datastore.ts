@@ -1,24 +1,20 @@
 import { fromPairs, toPairs } from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
+import { GenericDatum } from '../types/utils';
 import {
   CategoricalDatum,
   ContinuousDatum,
   DatetimeDatum,
   generateDatumModel,
   generateNewMoments,
+  ParseObjectType,
   processDatumSnapshotFactory
 } from './utils';
 
 export type DataProperty = Array<{
   [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
 }>;
-
-/*
-continuous --> normalized: value between 0-1, display: two decimal places
-categorical --> one-hot label, display: = raw 
-date --> raw: unix, display: dd-mm-yyyy or given ISO format
-*/
 
 const mapParams: MapTypeInfer = {
   categorical: { frequencies: {} },
@@ -78,23 +74,33 @@ export function calculateMoments(
   return momentsObject;
 }
 
+interface ReturnDataStoreFactory1 {
+  [variable: string]: Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>;
+}
+interface ReturnDataStoreFactory2 {
+  data: DataProperty;
+  stats: MomentsObject;
+}
+
+type ReturnDataStoreFactory = ReturnDataStoreFactory1 & ReturnDataStoreFactory2;
+
 export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
-  inferTypes: InferObject
-): {
-  [variable: string]:
-    | Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>
-    | DataProperty;
-  data: DataProperty;
-} {
-  // TODO - Better typing for this.
+  inferTypes: InferObject,
+  parserObject?: ParseObjectType
+): ReturnDataStoreFactory {
+  // TODO: Better typing for this.
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
   const moments = calculateMoments(filledDataSet, inferTypes);
   const modelName = name || 'dataStore';
 
-  const datumPreprocessor = processDatumSnapshotFactory(inferTypes, moments);
+  const datumPreprocessor = processDatumSnapshotFactory(
+    inferTypes,
+    moments,
+    parserObject
+  );
 
   const datumStore = types
     .model('datumStore', generateDatumModel(keysArray))
@@ -104,7 +110,8 @@ export function dataStoreFactory(
 
   const genericDataset = types
     .model(modelName, {
-      data: types.array(datumStore)
+      data: types.array(datumStore),
+      stats: types.frozen()
     })
     .extend(self => {
       const viewsVariableGetters = keysArray.reduce((acc, variable) => {
@@ -126,7 +133,8 @@ export function dataStoreFactory(
     });
 
   const dataSetInstance = genericDataset.create({
-    data: instanceData
+    data: instanceData,
+    stats: moments
   });
   return dataSetInstance;
 }

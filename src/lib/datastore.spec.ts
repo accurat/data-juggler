@@ -1,8 +1,9 @@
 // tslint:disable:no-expression-statement
 // tslint:disable:no-console
 import test from 'ava';
+import { scaleLinear } from 'd3-scale';
+import dayjs from 'dayjs';
 import { range } from 'lodash';
-import { DateTime } from 'luxon';
 import {
   calculateMoments,
   dataStoreFactory,
@@ -11,8 +12,11 @@ import {
   populateNullData
 } from './datastore';
 
-const DEFAULT_DATE = 1552397833139;
-const DATES_D = range(4).map(i => DEFAULT_DATE - i * 10000);
+import { GenericDatum } from '../types/utils';
+import { ParseObjectType } from './utils';
+
+const DEFAULT_DATE = 1552563578;
+const DATES_D = range(4).map(i => DEFAULT_DATE - i * 100);
 
 const FIRST_SAMPLE_DATA: GenericDatum[] = [
   { a: 3, b: 'mamma', d: DATES_D[0] },
@@ -85,14 +89,67 @@ test('dataStore', t => {
     { raw: 1.5, scaled: 0.25 },
     { raw: 1, scaled: 0 }
   ]);
-
+  const DATETIME = dayjs.unix(DATES_D[0]);
   const firstSampleDatum = {
-    dateTime: DateTime.fromMillis(1552397833139),
-    iso: '2019-03-12',
-    locale: 'Mar 12, 2019, 2:37 PM',
-    raw: 1552397833139,
+    dateTime: DATETIME,
+    isValid: true,
+    iso: DATETIME.format('DD-MM-YYYY'),
+    raw: DATES_D[0],
     scaled: 1
   };
 
   t.deepEqual(firstSampleDatum, d[0]);
+});
+
+test('Custom formatter', t => {
+  const formatter: ParseObjectType = {
+    a: [
+      {
+        formatter: (datum, stats) => {
+          return datum.raw && typeof datum.raw === 'number' && stats
+            ? scaleLinear()
+                .domain([0, stats.max || 1])
+                .range([0, 0.5])(datum.raw)
+            : null;
+        },
+        name: 'rescaled'
+      },
+      {
+        formatter: datum =>
+          datum.raw && typeof datum.raw === 'number' ? datum.raw * 3 : null,
+        name: 'timesthree'
+      }
+    ],
+    d: [
+      {
+        formatter: datum =>
+          datum.dateTime && dayjs.isDayjs(datum.dateTime) // issue with instanceof for dayjs
+            ? datum.dateTime.format('YYYY')
+            : null,
+        name: 'year'
+      }
+    ]
+  };
+
+  const dataStore = dataStoreFactory(
+    'dataStore',
+    FIRST_SAMPLE_DATA,
+    INSTANCE_TYPES,
+    formatter
+  );
+
+  const EXPECTED_YEAR = '2019';
+
+  const EXPECTED_A = { raw: 3, scaled: 1, timesthree: 9, rescaled: 0.5 };
+
+  const firstInstanceOfA = dataStore.data[0].a;
+  const firstDateInstanceWithGetter = dataStore.d[0];
+  const firstDateInstanceNormal = dataStore.data[0].d;
+  t.notThrows(() =>
+    dataStoreFactory('dataStore', FIRST_SAMPLE_DATA, INSTANCE_TYPES, formatter)
+  );
+
+  t.deepEqual(firstDateInstanceNormal, firstDateInstanceWithGetter);
+  t.deepEqual(EXPECTED_YEAR, firstDateInstanceNormal.year);
+  t.deepEqual(EXPECTED_A, firstInstanceOfA);
 });

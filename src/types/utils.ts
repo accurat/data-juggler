@@ -1,3 +1,5 @@
+import { Dayjs } from 'dayjs';
+
 // tslint:disable:no-if-statement
 
 export function hasMultipleProperties(
@@ -22,3 +24,6 @@ export const isCategorical = (
   moment: MomentsType
 ): moment is NormalizingCategorical =>
   hasMultipleProperties(moment, ['frequencies']);
+export interface GenericDatum {
+  readonly [key: string]: number | string | boolean | null | Dayjs;
+}
