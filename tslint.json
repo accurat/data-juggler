@@ -23,12 +23,12 @@
     // Functional style rules
     "no-this": true,
     "no-class": true,
-    "no-mixed-interface": true,
+    "no-mixed-interface": false,
     "no-expression-statement": [
       true,
       { "ignore-prefix": ["console.", "process.exit"] }
     ],
-    "no-if-statement": true
+    "no-if-statement": false
     /* end tslint-immutable rules */
   }
 }

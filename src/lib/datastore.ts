@@ -1,96 +1,47 @@
-import { fromPairs, toPairs } from 'lodash';
 import { _NotCustomized, types } from 'mobx-state-tree';
 
-import { GenericDatum } from '../types/utils';
+import { processDatumSnapshotFactory } from './utils';
+import { GenericDatum, ParseObjectType } from './utils/dataInference';
 import {
   CategoricalDatum,
   ContinuousDatum,
+  DataProperty,
   DatetimeDatum,
-  generateDatumModel,
-  generateNewMoments,
-  ParseObjectType,
-  processDatumSnapshotFactory
-} from './utils';
+  generateDatumModel
+} from './utils/dataTypes';
+import {
+  calculateMoments,
+  getKeysArray,
+  populateNullData
+} from './utils/stats';
 
-export type DataProperty = Array<{
-  [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
-}>;
-
-const mapParams: MapTypeInfer = {
-  categorical: { frequencies: {} },
-  continuous: { min: null, max: null, sum: 0 },
-  date: { min: null, max: null }
-};
-
-export function generateParamsArrayFromInferObject(
-  inferObject: InferObject
-): MomentsObject {
-  return fromPairs(
-    toPairs(inferObject).map(([variable, possibleType]) => {
-      return [variable, mapParams[possibleType]];
-    })
-  );
-}
-
-export function getKeysArray(rawDataSet: GenericDatum[]): string[] {
-  const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
-    const keys = Object.keys(datum);
-    return new Set([...accumulator, ...keys]);
-  }, new Set<string>());
-
-  const keysArray = Array.from(keysSet);
-  return keysArray;
-}
-
-export function populateNullData(
-  rawDataSet: GenericDatum[],
-  keysArray: string[]
-): GenericDatum[] {
-  const filledDataSet = rawDataSet.map(datum => {
-    const filledDatum: GenericDatum = keysArray.reduce(
-      (acc: GenericDatum, key) => {
-        return { ...acc, [key]: datum.hasOwnProperty(key) ? datum[key] : null };
-      },
-      {}
-    );
-    return filledDatum;
-  });
-  return filledDataSet;
-}
-
-export function calculateMoments(
-  rawDataSet: GenericDatum[],
-  inferObject: InferObject
-): MomentsObject {
-  const inferedObject: MomentsObject = generateParamsArrayFromInferObject(
-    inferObject
-  );
-
-  const momentsObject: MomentsObject = rawDataSet.reduce(
-    generateNewMoments,
-    inferedObject
-  );
-
-  return momentsObject;
-}
-
-interface ReturnDataStoreFactory1 {
+interface GenericPropertyFactory {
   [variable: string]: Array<ContinuousDatum | CategoricalDatum | DatetimeDatum>;
 }
-interface ReturnDataStoreFactory2 {
+interface DefaultPropertyFactory {
   data: DataProperty;
   stats: MomentsObject;
 }
 
-type ReturnDataStoreFactory = ReturnDataStoreFactory1 & ReturnDataStoreFactory2;
+type GenericDataStore = GenericPropertyFactory & DefaultPropertyFactory;
 
+// TODO: Better typing for this.
+/**
+ * The core function, it takes in a dataset, a type inference object and an (optional) formatter and returns a mobx-state-tree datastore
+ *
+ * @export
+ * @param {string} name
+ * @param {GenericDatum[]} rawDataSet
+ * @param {InferObject} inferTypes
+ * @param {ParseObjectType} [parserObject]
+ * @returns {GenericDataStore}
+ */
 export function dataStoreFactory(
   name: string,
   rawDataSet: GenericDatum[],
   inferTypes: InferObject,
   parserObject?: ParseObjectType
-): ReturnDataStoreFactory {
-  // TODO: Better typing for this.
+): GenericDataStore {
   const keysArray = getKeysArray(rawDataSet);
   const filledDataSet = populateNullData(rawDataSet, keysArray);
   const moments = calculateMoments(filledDataSet, inferTypes);

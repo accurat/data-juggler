@@ -1,7 +1,6 @@
 import {
   fromPairs,
   has,
-  isNull,
   isNumber,
   isUndefined,
   max as _max,
@@ -12,143 +11,40 @@ import {
 
 import dayjs from 'dayjs';
 
-import { IMaybeNull, IType, types } from 'mobx-state-tree';
-
 import {
   GenericDatum,
   isCategorical,
   isContinous,
-  isDatetime
-} from '../types/utils';
+  isDatetime,
+  ParseObjectType,
+  valiDate
+} from './utils/dataInference';
 
-// tslint:disable:no-if-statement
+import {
+  CategoricalDatum,
+  ContinuousDatum,
+  DatetimeDatum
+} from './utils/dataTypes';
+
 // tslint:disable:no-this
 // tslint:disable:no-expression-statement
-// tslint:disable:no-mixed-interface
 // Fuck you tslint, watch me use those fucking if statements.
-
-export interface ContinuousDatum {
-  raw: number;
-  scaled: number | null;
-  [customForms: string]: number | string | null;
-}
-
-export interface CategoricalDatum {
-  raw: string;
-  [customForms: string]: number | string | null;
-}
-
-export interface DatetimeDatum {
-  raw: number;
-  iso: string;
-  dateTime: dayjs.Dayjs;
-  scaled: number | null;
-  isValid: boolean;
-  [customForms: string]: number | string | null | dayjs.Dayjs | boolean;
-}
-
-const updateMin = (value: number, min: number | null) =>
-  isNull(min) ? value : _min([value, min]) || min;
-const updateMax = (value: number, max: number | null) =>
-  isNull(max) ? value : _max([value, max]) || max;
-
-export const generateNewMoments = (
-  accumulator: MomentsObject,
-  datum: GenericDatum
-) => {
-  const entries = toPairs(datum);
-
-  const newMomentsEntries = entries.map(([variable, value]) => {
-    const variableMoments = accumulator[variable];
-
-    if (isCategorical(variableMoments) && typeof value === 'string') {
-      const { frequencies } = variableMoments;
-      const newFrequencies = {
-        ...frequencies,
-        [value]: frequencies[value] ? frequencies[value] + 1 : 1
-      };
-      const newFrequencyMoments: NormalizingCategorical = {
-        frequencies: newFrequencies
-      };
-
-      return [variable, newFrequencyMoments];
-    } else if (isContinous(variableMoments) && typeof value === 'number') {
-      const { min, max, sum } = variableMoments;
-
-      const newMin = updateMin(value, min);
-      const newMax = updateMax(value, max);
-      const updatedSum = sum + value;
-
-      const newContinousMoments: NormalizingContinuous = {
-        max: newMax,
-        min: newMin,
-        sum: updatedSum
-      };
-
-      return [variable, newContinousMoments];
-    } else if (isDatetime(variableMoments) && typeof value === 'number') {
-      const { min, max } = variableMoments;
-      const newMin = updateMin(value, min);
-      const newMax = updateMax(value, max);
-
-      const newDatetimeMoments: NormalizingDatetime = {
-        max: newMax,
-        min: newMin
-      };
-      return [variable, newDatetimeMoments];
-    } else {
-      return [variable, variableMoments];
-    }
-  });
-
-  const newMoments: MomentsObject = fromPairs(newMomentsEntries);
-
-  return newMoments;
-};
-
-interface FrozenObject {
-  [variable: string]: IMaybeNull<IType<any, any, any>>;
-}
-
-export function generateDatumModel(datumKeys: string[]): FrozenObject {
-  const model = datumKeys.map(variable => [
-    variable,
-    types.maybeNull(types.frozen())
-  ]);
-
-  const storeObj: {
-    [variable: string]: IMaybeNull<IType<any, any, any>>;
-  } = fromPairs(model);
-
-  return storeObj;
-}
 
 // --- Processing the snapshot
 
-function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
-  return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
-}
-
-type GenericFormattingFunction = (
-  datum: CategoricalDatum | ContinuousDatum | DatetimeDatum,
-  stats?: {
-    min?: number;
-    max?: number;
-    frequencies?: { [cat: string]: number };
-    sum?: number;
-  },
-  row?: {
-    [variable: string]: CategoricalDatum | ContinuousDatum | DatetimeDatum;
-  }
-) => number | string | dayjs.Dayjs | null;
-
-export interface ParseObjectType {
-  [variable: string]: Array<{
-    name: string;
-    formatter: GenericFormattingFunction;
-  }>;
-}
-
+/**
+ * A high order function that processes the mobx-state-tree dataset snapshot, calculates the necessary statistics, adds the custom formatter and returns a mobx-state-tree store
+ *
+ * @export
+ * @param {InferObject} inferObject
+ * @param {MomentsObject} moments
+ * @param {ParseObjectType} [parseObject]
+ * @returns {((
+ *   snapshot: GenericDatum
+ * ) => {
+ *   [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
+ * })}
+ */
 export function processDatumSnapshotFactory(
   inferObject: InferObject,
   moments: MomentsObject,
