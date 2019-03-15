@@ -11,9 +11,9 @@ This library abstracts that, normalizes, counts, calculates and does many ineffi
 
 ### Installations
 
-'''
+```
 yarn add mst-datastore
-'''
+```
 
 ### Basic usage
 
