@@ -4,16 +4,14 @@ import test from 'ava';
 import { scaleLinear } from 'd3-scale';
 import dayjs from 'dayjs';
 import { range } from 'lodash';
+import { dataStoreFactory } from '..';
+import { GenericDatum, ParseObjectType } from './utils/dataInference';
 import {
   calculateMoments,
-  dataStoreFactory,
   generateParamsArrayFromInferObject,
   getKeysArray,
   populateNullData
-} from './datastore';
-
-import { GenericDatum } from '../types/utils';
-import { ParseObjectType } from './utils';
+} from './utils/stats';
 
 const DEFAULT_DATE = 1552563578;
 const DATES_D = range(4).map(i => DEFAULT_DATE - i * 100);
