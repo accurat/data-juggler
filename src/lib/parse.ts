@@ -45,7 +45,7 @@ import {
  *   [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
  * })}
  */
-export function processDatumSnapshotFactory(
+export function parseDatumFactory(
   inferObject: InferObject,
   moments: MomentsObject,
   parseObject?: ParseObjectType

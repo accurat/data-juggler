@@ -1,1 +1,1 @@
-export * from './lib/datastore';
+export * from './lib/juggler';
