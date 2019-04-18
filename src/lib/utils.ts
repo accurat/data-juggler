@@ -146,7 +146,14 @@ export function processDatumSnapshotFactory(
 
               return [variable, returnObjDate];
             } else {
-              return [variable, { raw: value }];
+              const defaultDatetime: DatetimeDatum = {
+                dateTime: dayjs(0),
+                isValid: false,
+                iso: 'NaD',
+                raw: Number(value),
+                scaled: null,
+              }
+              return [variable, defaultDatetime];
             }
 
           case 'categorical':
