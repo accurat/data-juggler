@@ -24,8 +24,21 @@ export const isCategorical = (
   moment: MomentsType
 ): moment is NormalizingCategorical =>
   hasMultipleProperties(moment, ['frequencies']);
+
+export interface JSONObject {
+  [key: string]: GenericDatum;
+}
+export interface JSONArray extends Array<GenericDatum> {}
+
 export interface GenericDatum {
-  readonly [key: string]: number | string | boolean | null | Dayjs;
+  readonly [key: string]:
+    | number
+    | string
+    | boolean
+    | null
+    | Dayjs
+    | JSONObject
+    | JSONArray;
 }
 
 export function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {

@@ -17,8 +17,8 @@ export interface DatetimeDatum {
   raw: number;
   iso: string;
   dateTime: dayjs.Dayjs;
-  scaled: number | null;
   isValid: boolean;
+  scaled: number | null;
   [customForms: string]: number | string | null | dayjs.Dayjs | boolean;
 }
 
