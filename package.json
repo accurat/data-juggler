@@ -55,8 +55,6 @@
     "@types/lodash": "^4.14.122",
     "dayjs": "^1.8.10",
     "lodash": "^4.17.11",
-    "mobx": "^5.9.0",
-    "mobx-state-tree": "^3.10.2",
     "trash": "^5.0.0"
   },
   "devDependencies": {

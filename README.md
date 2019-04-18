@@ -1,4 +1,4 @@
-# mst-datastore
+# data-juggler
 
 This library serves little purpose, like all of us and everything we do, but is a bit covered and tested, as you can see.
 
@@ -11,7 +11,7 @@ This library abstracts that, normalizes, counts, calculates and does many ineffi
 
 ### Installations
 
-```
+```bash
 yarn add mst-datastore
 ```
 
@@ -34,7 +34,7 @@ types = {
   timeOfMeasure: 'date'
 };
 
-const dataStore = dataStoreFactory('dataStore', data, types);
+const dataset = dataJuggler('dataStore', data, types);
 ```
 
 Launch the `dataStoreFactory` function with a name and the sample data and instance types, and enjoy a beutiful mobx-state-tree store with everything that you need in it (this is, at least for now, a lie).
@@ -45,7 +45,7 @@ The datastore will have a defult property `data`, i.e. an array of the decorated
 
 ```javascript
 
-const instance = dataStore.data[0]
+const instance = dataset[0]
 
 instance === {
   height: {
@@ -116,11 +116,3 @@ instance === {
 // true
 
 ```
-
-## TODO
-
-- [x] writing a README.md
-- [x] custom formatter
-- [ ] using [traph](https://github.com/caesarsol/traph)
-- [ ] date comparison
-- [ ] fetching with [ky](https://github.com/sindresorhus/ky)
