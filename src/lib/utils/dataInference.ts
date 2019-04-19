@@ -1,5 +1,5 @@
-import dayjs, { Dayjs } from 'dayjs';
-import { CategoricalDatum, ContinuousDatum, DatetimeDatum } from './dataTypes';
+import dayjs from 'dayjs';
+import { CategoricalDatum, ContinuousDatum, DatetimeDatum, MomentsType, NormalizingCategorical, NormalizingContinuous, NormalizingDatetime, StringKeyedObj } from '../../types/types';
 
 /** @hidden */
 function hasMultipleProperties(
@@ -24,8 +24,11 @@ export const isCategorical = (
   moment: MomentsType
 ): moment is NormalizingCategorical =>
   hasMultipleProperties(moment, ['frequencies']);
-export interface GenericDatum {
-  readonly [key: string]: number | string | boolean | null | Dayjs;
+
+export type GenericDatumValue = number | string | boolean | null
+
+export type GenericDatum<T extends StringKeyedObj> = {
+  [key in keyof T]: GenericDatumValue
 }
 
 export function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
@@ -43,10 +46,10 @@ export type GenericFormattingFunction = (
   row?: {
     [variable: string]: CategoricalDatum | ContinuousDatum | DatetimeDatum;
   }
-) => number | string | dayjs.Dayjs | null;
+) => string
 
-export interface ParseObjectType {
-  [variable: string]: Array<{
+export type FormatterObject<T extends StringKeyedObj> = {
+  [variable in keyof T]: Array<{
     name: string;
     formatter: GenericFormattingFunction;
   }>;
