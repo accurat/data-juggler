@@ -9,7 +9,6 @@ import {
 
 import { isNull } from 'lodash'
 import { fromPairs, toPairs } from './parseObjects'
-// tslint:disable:no-console
 
 const mapParams: MapTypeInfer = {
   categorical: { frequencies: {} },
