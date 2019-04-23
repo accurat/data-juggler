@@ -4,7 +4,7 @@ This library serves little purpose, like all of us and everything we do, but is 
 
 This libary was `__init__.py`iated with [typescript starter](https://github.com/bitjson/typescript-starter) and uses the devil 👹 tslint.
 
-In the context, the idea is to generalize and abstract the overused and reused DataStore, that we magically create in all of our projects, with a fetching function and so on.
+In the context, the idea is to generalize and abstract the data propagation within an application, that we magically create in all of our projects.
 This library abstracts that, normalizes, counts, calculates and does many inefficient things that feed into our laziness.
 
 ## Usage
@@ -12,7 +12,7 @@ This library abstracts that, normalizes, counts, calculates and does many ineffi
 ### Installations
 
 ```bash
-yarn add mst-datastore
+yarn add data-juggler
 ```
 
 ### Basic usage
@@ -34,14 +34,14 @@ types = {
   timeOfMeasure: 'date'
 };
 
-const dataset = dataJuggler('dataStore', data, types);
+const dataset = dataJuggler(data, types);
 ```
 
-Launch the `dataStoreFactory` function with a name and the sample data and instance types, and enjoy a beutiful mobx-state-tree store with everything that you need in it (this is, at least for now, a lie).
+Launch the `dataJuggler` function with the sample data and instance types, and enjoy a beutiful dataset full of getters and stuff with everything that you need in it (this is, at least for now, a lie).
 
 ### Properties
 
-The datastore will have a defult property `data`, i.e. an array of the decorated datum instances.
+You'll get your data back (don't worry) with added properties!
 
 ```javascript
 
@@ -67,13 +67,13 @@ instance === {
 
 ```
 
-All of the feautures and representation of a datapoint are computed and lazy and whatnot.
-
 On top of that you also get some getters for each variable that return the whole column, this could be cutted eventually in a censorship attempt by my boss.
+
+Edit: the censorship did happen, this is not there anymore.
 
 ### Custom formatter
 
-You can also pass a custom formatter for each column type (in the next PR you will be able to pass multiple per column so stay tuned) as follow:
+You can also pass a custom formatter for each column type as follow:
 
 ```javascript
 
@@ -94,7 +94,7 @@ formatter = {
 
 //  if we look for the same instance as before
 
-const dataStore = dataStoreFactory('dataStore', data, types, formatter);
+const dataStore = dataStoreFactory(data, types, formatter);
 
 instance === {
   height: {
