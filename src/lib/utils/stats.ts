@@ -24,7 +24,7 @@ const getKeys = <T>(obj: T) => Object.keys(obj) as Array<keyof T>
 
 const setDifference = <A>(a: Set<A>, b: Set<A>) => [...a].filter(x => !b.has(x))
 
-export function generateParamsArrayFromInferObject<T>(
+export function generateDefaultMoments<T>(
   inferObject: InferObject<T>
 ): MomentsObject<T> {
   const variables = getKeys(inferObject)
@@ -106,14 +106,10 @@ export function computeMoments<T>(
   rawDataSet: Array<GenericDatum<T>>,
   inferObject: InferObject<T>
 ): MomentsObject<T> {
-  const inferedObject: MomentsObject<T> = generateParamsArrayFromInferObject(
-    inferObject
-  )
 
-  const momentsObject: MomentsObject<T> = rawDataSet.reduce(
-    generateNewMoments,
-    inferedObject
-  )
+
+  const inferedObject: MomentsObject<T> = generateDefaultMoments(inferObject)
+  const momentsObject: MomentsObject<T> = rawDataSet.reduce(generateNewMoments, inferedObject)
 
   return momentsObject
 }

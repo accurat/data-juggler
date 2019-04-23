@@ -2,19 +2,43 @@
 // tslint:disable:no-console
 import test from 'ava';
 import dayjs from 'dayjs';
-import { range, toNumber, toString } from 'lodash';
+import { omit, range, toNumber, toString } from 'lodash';
+import fetch from 'node-fetch'
 import { dataJuggler } from '..';
 import { InferObject, MomentsObject } from '../types/types';
 import { FormatterObject } from './utils/dataInference';
 // ParseObjectType
 import {
   computeMoments,
-  generateParamsArrayFromInferObject,
+  generateDefaultMoments,
   populateNullData
-} from './utils/stats';
+} from './utils/stats'
 
-const DEFAULT_DATE = 1552563578;
-const DATES_D = range(4).map(i => DEFAULT_DATE - i * 100);
+import { doKeysMatch } from './utils/parseObjects'
+
+const DEFAULT_DATE = 1552563578
+const URL = 'https://gist.githubusercontent.com/NoFishLikeIan/fa2d6511d589b4871370743a4ea74980/raw/3dc4ef72166e07dae250b7a7063e544139f8cbd8/mock_data.json'
+const DATES_D = range(4).map(i => DEFAULT_DATE - i * 100)
+
+
+// tslint:disable-next-line:no-object-literal-type-assertion
+const dataTypes = {
+  city: 'categorical',
+  dateOfMeasure: 'date',
+  gender: 'categorical',
+  height: 'continuous',
+  id: 'categorical',
+  weight: 'continuous',
+} as const
+
+// tslint:disable-next-line:typedef
+export async function fetchData(url: string) {
+  const result = await fetch(url)
+  const data = await result.json()
+
+  return data
+}
+
 
 const FIRST_SAMPLE_DATA = [
   { a: 3, b: 'mamma', d: DATES_D[0] },
@@ -36,7 +60,7 @@ const juggledData = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES); // Better ty
 
 // -------
 test('inferObject', t => {
-  const defaultMoments = generateParamsArrayFromInferObject(INSTANCE_TYPES);
+  const defaultMoments = generateDefaultMoments(INSTANCE_TYPES);
 
   const EXPECTED_DEFAULT_MOMENTS: MomentsObject<Datum> = {
     a: { min: null, max: null, sum: 0 },
@@ -111,11 +135,7 @@ test('Custom formatter', t => {
     ]
   };
 
-  const formattedJuggledData = dataJuggler(
-    FIRST_SAMPLE_DATA,
-    INSTANCE_TYPES,
-    formatter
-  )
+  const formattedJuggledData = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES, formatter)
      // Better typing for this
 
 
@@ -129,3 +149,17 @@ test('Custom formatter', t => {
   t.deepEqual(EXPECTED_YEAR, firstDateInstanceNormal.year);
   t.deepEqual(EXPECTED_A, firstInstanceOfA);
 });
+
+
+test("Fetching", async t => {
+  // tslint:disable-next-line:only-arrow-functions
+  t.notThrows(async function(): Promise<void> {fetchData(URL)})
+
+  const data = await fetchData(URL)
+  const matchingKeys = doKeysMatch(data, dataTypes)
+  const unmatchingKeys = !doKeysMatch(data, omit(dataTypes, 'city'))
+  t.true(matchingKeys)
+  t.true(unmatchingKeys)
+  t.notThrows(()=> dataJuggler(data, dataTypes))
+  t.throws(() => dataJuggler(data, omit(dataTypes, 'city')))
+})
