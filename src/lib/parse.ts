@@ -1,13 +1,6 @@
 import {
-  Dictionary,
-  fromPairs,
-  has,
-  isNumber,
-  isUndefined,
-  mapValues,
   max as _max,
   min as _min,
-  toPairs,
   toString
 } from 'lodash'
 
@@ -17,15 +10,11 @@ import {
   FormatterObject,
   GenericDatum,
   GenericDatumValue,
-  isCategorical,
-  isContinous,
-  isDatetime,
   valiDate
 } from './utils/dataInference'
 
 import {
   CategoricalDatum,
-  CollapsedDatum,
   ContinuousDatum,
   DatetimeDatum,
   InferObject,
@@ -34,44 +23,26 @@ import {
   NormalizingCategorical,
   NormalizingContinuous,
   NormalizingDatetime,
-  StringKeyedObj,
-  ValueOf
-} from '../types/types'
+  StringKeyedObj} from '../types/types'
+
+import { fromPairs } from './utils/parseObjects';
 
 // tslint:disable:no-this
+// tslint:disable:no-object-literal-type-assertion
+// tslint:disable:no-object-mutation
 // tslint:disable:no-expression-statement
 // Fuck you tslint, watch me use those fucking if statements.
 
-/**
- * A high order function that processes a dataset snapshot, calculates the necessary statistics, adds the custom formatter and returns an object
- *
- * @export
- * @param {InferObject} inferObject
- * @param {MomentsObject} moments
- * @param {FormatterObject} [parseObject]
- * @returns {((
- *   snapshot: GenericDatum
- * ) => {
- *   [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum
- * })}
- */
-// : (snapshot: GenericDatum) => CollapsedDatum<T>
-
-
-// type ReturnTuple<IOT> =
-//   | [ValueOf<IOT> & 'continuous', ContinuousDatum]
-//   | [ValueOf<IOT> & 'categorical', CategoricalDatum]
-//   | [ValueOf<IOT> & 'date', DatetimeDatum]
-
+type ParsedDatum<T> = { [P in keyof T]: ContinuousDatum | DatetimeDatum | CategoricalDatum }
 
 export function parseDatumFactory<T extends StringKeyedObj>(
   inferObject: InferObject<T>,
   moments: MomentsObject<T>,
   formatterObject?: FormatterObject<T>
-) {
-  return (snapshot: GenericDatum<T>) => {
-    const pairs: Array<[[keyof T], (ContinuousDatum | DatetimeDatum | CategoricalDatum)]> = Object.entries(snapshot)
-      .map(([variable, value]:[keyof T, GenericDatumValue]) => {
+): (snapshot: GenericDatum<T>) => ParsedDatum<T> {
+  return (snapshot) => {
+    return fromPairs(Object.entries(snapshot)
+      .map(([variable, value]:[keyof T, GenericDatumValue]): [keyof T, ContinuousDatum | DatetimeDatum | CategoricalDatum] => {
         const inference: InferType = inferObject[variable]
 
         const customVariableFormatter = formatterObject ? formatterObject[variable] : []
@@ -143,8 +114,6 @@ export function parseDatumFactory<T extends StringKeyedObj>(
             return [variable, datum]
           }
         }
-      })
-
-    const a: { [K in keyof T]: ContinuousDatum | DatetimeDatum | CategoricalDatum } = pairs.reduce((acc, [key, value]) => ({...acc, [key]: value}), {})
+      }))
   }
 }

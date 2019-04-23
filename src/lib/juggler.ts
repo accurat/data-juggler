@@ -1,9 +1,9 @@
 import { parseDatumFactory } from './parse';
-import { GenericDatum, FormatterObject } from './utils/dataInference';
+import { FormatterObject, GenericDatum } from './utils/dataInference';
 
+import { CategoricalDatum, ContinuousDatum, DatetimeDatum, InferObject } from '../types/types';
 import {
-  calculateMoments,
-  getKeysArray,
+  computeMoments,
   populateNullData
 } from './utils/stats';
 
@@ -17,14 +17,13 @@ type JuggledData = Array<{
  * The core function, it takes in a dataset, a type inference object and an (optional) formatter and returns the juggled data
  */
 export function dataJuggler<T>(
-  rawDataSet: GenericDatum[],
+  rawDataSet: Array<GenericDatum<T>>,
   inferTypes: InferObject<T>,
-  parserObject?: FormatterObject
+  parserObject?: FormatterObject<T>
 ): JuggledData {
 
-  const keysArray = getKeysArray(rawDataSet);
-  const filledDataSet = populateNullData(rawDataSet, keysArray);
-  const moments = calculateMoments(filledDataSet, inferTypes);
+  const filledDataSet = populateNullData(rawDataSet);
+  const moments = computeMoments(filledDataSet, inferTypes);
 
   const datumPreprocessor = parseDatumFactory(
     inferTypes,

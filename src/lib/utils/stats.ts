@@ -1,15 +1,19 @@
-import { fromPairs, isNull, max as _max, min as _min, toPairs } from 'lodash';
+import { isNull, max as _max, min as _min } from 'lodash';
+import { InferObject, MapTypeInfer, MomentsObject, NormalizingCategorical, NormalizingContinuous, NormalizingDatetime } from '../../types/types';
 import {
   GenericDatum,
+  GenericDatumValue,
   isCategorical,
   isContinous,
   isDatetime
 } from './dataInference';
 
+import { fromPairs, toPairs } from './parseObjects'
+
 const mapParams: MapTypeInfer = {
   categorical: { frequencies: {} },
-  continuous: { min: null, max: null, sum: 0 },
-  date: { min: null, max: null }
+  continuous: { min: 0, max: 0, sum: 0 },
+  date: { min: 0, max: 0 }
 };
 
 const updateMin = (value: number, min: number | null) =>
@@ -17,49 +21,43 @@ const updateMin = (value: number, min: number | null) =>
 const updateMax = (value: number, max: number | null) =>
   isNull(max) ? value : _max([value, max]) || max;
 
-export function generateParamsArrayFromInferObject(
-  inferObject: InferObject
-): MomentsObject {
-  return fromPairs(
-    toPairs(inferObject).map(([variable, possibleType]) => {
-      return [variable, mapParams[possibleType]];
-    })
-  );
+const getKeys = <T>(obj: T) => Object.keys(obj) as Array<keyof T>
+
+const setDifference = <A>(a: Set<A>, b: Set<A>) => [...a].filter(x => !b.has(x))
+
+export function generateParamsArrayFromInferObject<T>(
+  inferObject: InferObject<T>
+): MomentsObject<T> {
+  const variables = getKeys(inferObject)
+  const moments = variables.reduce((acc, v) => ({...acc, [v]: mapParams[inferObject[v]]}), {}) as MomentsObject<T>
+
+  return moments
 }
 
-export function getKeysArray(rawDataSet: GenericDatum[]): string[] {
-  const keysSet = rawDataSet.reduce((accumulator: Set<string>, datum) => {
-    const keys = Object.keys(datum);
-    return new Set([...accumulator, ...keys]);
-  }, new Set<string>());
-
-  const keysArray = Array.from(keysSet);
-  return keysArray;
+export function getAllKeys<T>(rawDataSet: Array<GenericDatum<T>>): Set<(keyof T)> {
+  return rawDataSet.reduce(
+    (acc: Set<keyof T>, datum) => new Set([...acc, ...getKeys<GenericDatum<T>>(datum)]),
+    new Set<keyof T>()
+  )
 }
 
-export function populateNullData(
-  rawDataSet: GenericDatum[],
-  keysArray: string[]
-): GenericDatum[] {
-  const filledDataSet = rawDataSet.map(datum => {
-    const filledDatum: GenericDatum = keysArray.reduce(
-      (acc: GenericDatum, key) => {
-        return { ...acc, [key]: datum.hasOwnProperty(key) ? datum[key] : null };
-      },
-      {}
-    );
-    return filledDatum;
-  });
-  return filledDataSet;
+export function populateNullData<T> (
+  rawDataSet: Array<GenericDatum<T>>,
+): Array<GenericDatum<T>> {
+  const allKeys = getAllKeys(rawDataSet)
+
+  return rawDataSet.map((datum): GenericDatum<T> => {
+    const missingKeys = setDifference(allKeys, new Set([...getKeys(datum)]))
+    const filledDatum = missingKeys.reduce((acc, key) =>({...acc, [key]: null}), {})
+    return {...datum, ...filledDatum}
+  })
 }
 
-export const generateNewMoments = (
-  accumulator: MomentsObject,
-  datum: GenericDatum
+export const generateNewMoments = <T>(
+  accumulator: MomentsObject<T>,
+  datum: GenericDatum<T>
 ) => {
-  const entries = toPairs(datum);
-
-  const newMomentsEntries = entries.map(([variable, value]) => {
+  const newMomentsEntries: Array<[keyof T, NormalizingCategorical | NormalizingContinuous | NormalizingDatetime]> = toPairs(datum).map(([variable, value]:[keyof T, GenericDatumValue]) => {
     const variableMoments = accumulator[variable];
 
     if (isCategorical(variableMoments) && typeof value === 'string') {
@@ -100,22 +98,22 @@ export const generateNewMoments = (
     } else {
       return [variable, variableMoments];
     }
-  });
+  })
 
-  const newMoments: MomentsObject = fromPairs(newMomentsEntries);
+  const newMoments: MomentsObject<T> = fromPairs(newMomentsEntries);
 
   return newMoments;
 };
 
-export function calculateMoments(
-  rawDataSet: GenericDatum[],
-  inferObject: InferObject
-): MomentsObject {
-  const inferedObject: MomentsObject = generateParamsArrayFromInferObject(
+export function computeMoments<T>(
+  rawDataSet: Array<GenericDatum<T>>,
+  inferObject: InferObject<T>
+): MomentsObject<T> {
+  const inferedObject: MomentsObject<T> = generateParamsArrayFromInferObject(
     inferObject
   );
 
-  const momentsObject: MomentsObject = rawDataSet.reduce(
+  const momentsObject: MomentsObject<T> = rawDataSet.reduce(
     generateNewMoments,
     inferedObject
   );
