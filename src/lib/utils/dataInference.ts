@@ -9,7 +9,7 @@ function hasMultipleProperties(
   return properties.every(p => obj.hasOwnProperty(p));
 }
 
-export const isContinous = (
+export const isContinuous = (
   moment: MomentsType
 ): moment is NormalizingContinuous =>
   hasMultipleProperties(moment, ['min', 'max', 'sum']);
@@ -49,7 +49,7 @@ export type GenericFormattingFunction = (
 ) => string
 
 export type FormatterObject<T extends StringKeyedObj> = {
-  [variable in keyof T]: Array<{
+  [variable in keyof T]?: Array<{
     name: string;
     formatter: GenericFormattingFunction;
   }>;

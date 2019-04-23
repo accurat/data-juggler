@@ -1,25 +1,24 @@
-import { isNull, max as _max, min as _min } from 'lodash';
-import { InferObject, MapTypeInfer, MomentsObject, NormalizingCategorical, NormalizingContinuous, NormalizingDatetime } from '../../types/types';
+import { InferObject, MapTypeInfer, MomentsObject, NormalizingCategorical, NormalizingContinuous, NormalizingDatetime } from '../../types/types'
 import {
   GenericDatum,
   GenericDatumValue,
   isCategorical,
-  isContinous,
+  isContinuous,
   isDatetime
-} from './dataInference';
+} from './dataInference'
 
+import { isNull } from 'lodash'
 import { fromPairs, toPairs } from './parseObjects'
+// tslint:disable:no-console
 
 const mapParams: MapTypeInfer = {
   categorical: { frequencies: {} },
-  continuous: { min: 0, max: 0, sum: 0 },
-  date: { min: 0, max: 0 }
-};
+  continuous: { min: null, max: null, sum: 0 },
+  date: { min: null, max: null }
+}
 
-const updateMin = (value: number, min: number | null) =>
-  isNull(min) ? value : _min([value, min]) || min;
-const updateMax = (value: number, max: number | null) =>
-  isNull(max) ? value : _max([value, max]) || max;
+const updateMin = (value: number, min: number) => Math.min(value, min)
+const updateMax = (value: number, max: number) => Math.max(value, max)
 
 const getKeys = <T>(obj: T) => Object.keys(obj) as Array<keyof T>
 
@@ -56,54 +55,52 @@ export function populateNullData<T> (
 export const generateNewMoments = <T>(
   accumulator: MomentsObject<T>,
   datum: GenericDatum<T>
-) => {
-  const newMomentsEntries: Array<[keyof T, NormalizingCategorical | NormalizingContinuous | NormalizingDatetime]> = toPairs(datum).map(([variable, value]:[keyof T, GenericDatumValue]) => {
-    const variableMoments = accumulator[variable];
+): MomentsObject<T>  => {
+  return fromPairs(toPairs(datum).map(([variable, value]:[keyof T, GenericDatumValue]) => {
+    const variableMoments = accumulator[variable]
 
     if (isCategorical(variableMoments) && typeof value === 'string') {
-      const { frequencies } = variableMoments;
+      const { frequencies } = variableMoments
       const newFrequencies = {
         ...frequencies,
         [value]: frequencies[value] ? frequencies[value] + 1 : 1
-      };
+      }
       const newFrequencyMoments: NormalizingCategorical = {
         frequencies: newFrequencies
-      };
+      }
 
-      return [variable, newFrequencyMoments];
-    } else if (isContinous(variableMoments) && typeof value === 'number') {
-      const { min, max, sum } = variableMoments;
+      return [variable, newFrequencyMoments] as [keyof T, NormalizingCategorical]
 
-      const newMin = updateMin(value, min);
-      const newMax = updateMax(value, max);
-      const updatedSum = sum + value;
+    } else if (isContinuous(variableMoments) && typeof value === 'number') {
+      const { min, max, sum } = variableMoments
 
-      const newContinousMoments: NormalizingContinuous = {
+      const newMin = !isNull(min) ? updateMin(value, min) : value
+      const newMax = !isNull(max) ? updateMax(value, max) : value
+      const updatedSum = sum + value
+      const newContinousMoments = {
         max: newMax,
         min: newMin,
         sum: updatedSum
-      };
+      }
 
-      return [variable, newContinousMoments];
+      return [variable, newContinousMoments] as [keyof T, NormalizingContinuous]
+
     } else if (isDatetime(variableMoments) && typeof value === 'number') {
-      const { min, max } = variableMoments;
-      const newMin = updateMin(value, min);
-      const newMax = updateMax(value, max);
+      const { min, max } = variableMoments
+      const newMin = !isNull(min) ? updateMin(value, min) : value
+      const newMax = !isNull(max) ? updateMax(value, max) : value
 
-      const newDatetimeMoments: NormalizingDatetime = {
+      const newDatetimeMoments = {
         max: newMax,
         min: newMin
-      };
-      return [variable, newDatetimeMoments];
+      }
+      return [variable, newDatetimeMoments] as [keyof T, NormalizingDatetime]
     } else {
-      return [variable, variableMoments];
+      return [variable, variableMoments] as [keyof T, MomentsObject<T>[keyof T]]
     }
-  })
+  }))
 
-  const newMoments: MomentsObject<T> = fromPairs(newMomentsEntries);
-
-  return newMoments;
-};
+}
 
 export function computeMoments<T>(
   rawDataSet: Array<GenericDatum<T>>,
@@ -111,12 +108,12 @@ export function computeMoments<T>(
 ): MomentsObject<T> {
   const inferedObject: MomentsObject<T> = generateParamsArrayFromInferObject(
     inferObject
-  );
+  )
 
   const momentsObject: MomentsObject<T> = rawDataSet.reduce(
     generateNewMoments,
     inferedObject
-  );
+  )
 
-  return momentsObject;
+  return momentsObject
 }

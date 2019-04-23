@@ -8,8 +8,8 @@ import {
 } from './utils/stats';
 
 
-type JuggledData = Array<{
-  [variable: string]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
+type JuggledData<D> = Array<{
+  [V in keyof D]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
 }>
 
 // TODO: Better typing for this.
@@ -20,7 +20,7 @@ export function dataJuggler<T>(
   rawDataSet: Array<GenericDatum<T>>,
   inferTypes: InferObject<T>,
   parserObject?: FormatterObject<T>
-): JuggledData {
+): JuggledData<T> {
 
   const filledDataSet = populateNullData(rawDataSet);
   const moments = computeMoments(filledDataSet, inferTypes);

@@ -4,13 +4,13 @@ export type ValueOf<T> = T[keyof T];
 
 export interface NormalizingContinuous {
   sum: number;
-  min: number;
-  max: number;
+  min: number | null;
+  max: number | null;
 }
 
 export interface NormalizingDatetime {
-  min: number;
-  max: number;
+  min: number | null;
+  max: number | null;
 }
 
 export interface NormalizingCategorical {
@@ -31,9 +31,8 @@ export type MapSchema<T extends InferType> = MapTypeInfer[T];
 export interface StringKeyedObj { [key: string]: unknown }
 
 export type InferObject<T extends StringKeyedObj> = {
-  [variable in keyof T]: InferType;
+  [V in keyof T]: InferType
 }
-
 interface FormattedProperties {
   [customForms: string]: string | number | null | Dayjs | boolean
 }
