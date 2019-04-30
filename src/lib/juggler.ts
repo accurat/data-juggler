@@ -1,7 +1,7 @@
 import { parseDatumFactory } from './parse'
 import { FormatterObject, GenericDatum } from './utils/dataInference'
 
-import { CategoricalDatum, ContinuousDatum, DatetimeDatum, InferObject } from '../types/types'
+import { CategoricalDatum, ContinuousDatum, DatetimeDatum, InferObject, MomentsObject } from '../types/types'
 import { doKeysMatch } from './utils/parseObjects'
 import {
   computeMoments,
@@ -21,7 +21,7 @@ export function dataJuggler<T>(
   rawDataSet: Array<GenericDatum<T>>,
   inferTypes: InferObject<T>,
   parserObject?: FormatterObject<T>
-): JuggledData<T> {
+): { data: JuggledData<T>, moments: MomentsObject<T> } {
 
 
   if (!doKeysMatch(rawDataSet, inferTypes)) {
@@ -39,5 +39,5 @@ export function dataJuggler<T>(
 
   const instanceData = filledDataSet.map(datum => datumPreprocessor(datum))
 
-  return instanceData
+  return { data: instanceData, moments }
 }

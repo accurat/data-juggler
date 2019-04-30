@@ -56,7 +56,7 @@ const INSTANCE_TYPES: InferObject<Datum> = {
   d: 'date',
 };
 
-const juggledData = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES); // Better typing for this
+const { data: juggledData } = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES); // Better typing for this
 
 // -------
 test('inferObject', t => {
@@ -135,7 +135,7 @@ test('Custom formatter', t => {
     ]
   };
 
-  const formattedJuggledData = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES, formatter)
+  const { data: formattedJuggledData } = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES, formatter)
      // Better typing for this
 
 
