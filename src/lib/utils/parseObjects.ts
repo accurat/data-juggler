@@ -37,3 +37,14 @@ export function doKeysMatch<T>(dataSet: Array<GenericDatum<T>>, inferObject: Inf
   const expectedKeys = new Set([...Object.keys(inferObject)])
   return equalSets(incomingKeys, expectedKeys)
 }
+
+export function conditionalValueMap<K extends string, V, O>(
+  obj: { [k in K]: V },
+  paradigm: (k: K, v: V) => boolean,
+  fn: (k: K, v: V) => [K, O]
+  ): { [P in K]: V | O; } {
+    const pairs: Array<[K, O]> | Array<[K, V]> = toPairs(obj)
+    const newPairs = pairs.map<[K, O | V]>(([k, v]) => paradigm(k, v) ? fn(k, v) : [k, v])
+    return fromPairs(newPairs)
+}
+

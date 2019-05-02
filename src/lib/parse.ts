@@ -24,9 +24,10 @@ import {
   NormalizingCategorical,
   NormalizingContinuous,
   NormalizingDatetime,
-  StringKeyedObj} from '../types/types'
+  StringKeyedObj,
+} from '../types/types'
 
-import { fromPairs } from './utils/parseObjects';
+import { conditionalValueMap, fromPairs, toPairs } from './utils/parseObjects';
 
 // tslint:disable:no-this
 // tslint:disable:no-object-literal-type-assertion
@@ -123,4 +124,21 @@ export function parseDatumFactory<T extends StringKeyedObj>(
         }
       }))
   }
+}
+
+export function parseDates<T>(
+  rawData: Array<GenericDatum<T>>,
+  inferTypes: InferObject<T>
+  ): Array<{ [P in keyof T]: GenericDatumValue }> {
+  const dateKeys = toPairs(inferTypes)
+    .filter(([__, t]) => t === 'date')
+    .map(([v, __]) => v)
+
+  const isPairDate = <K extends keyof T>(key: K): boolean =>
+    dateKeys.includes(key)
+
+  const makeDayjs = <K extends keyof T, V>(key: K, value: V): [K, number] =>
+    [key, dayjs(String(value)).unix()]
+
+  return rawData.map((datum) => conditionalValueMap<keyof T, GenericDatumValue, number>(datum, isPairDate, makeDayjs))
 }

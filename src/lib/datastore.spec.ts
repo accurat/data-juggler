@@ -6,7 +6,7 @@ import { omit, range, toNumber, toString } from 'lodash';
 import fetch from 'node-fetch'
 import { dataJuggler } from '..';
 import { InferObject, MomentsObject } from '../types/types';
-import { FormatterObject } from './utils/dataInference';
+import { autoInferenceType, FormatterObject } from './utils/dataInference';
 // ParseObjectType
 import {
   computeMoments,
@@ -14,6 +14,7 @@ import {
   populateNullData
 } from './utils/stats'
 
+import { parseDates } from './parse';
 import { doKeysMatch } from './utils/parseObjects'
 
 const DEFAULT_DATE = 1552563578
@@ -49,6 +50,13 @@ const FIRST_SAMPLE_DATA = [
 
 type Datum = typeof FIRST_SAMPLE_DATA[0]
 
+const WITH_DATE_SAMPLE_DATA = [
+  { a: 3, b: 'mamma', d: '2018-02-20' },
+  { a: 2, b: 'papà', c: 2, d: '2018-03-20' },
+  { a: 1.5, b: 'cugino', c: 3, d: '2019-06-22' },
+  { a: 1, b: 'papà', c: 4, d: '2029-02-20' }
+]
+
 const INSTANCE_TYPES: InferObject<Datum> = {
   a: 'continuous',
   b: 'categorical',
@@ -56,10 +64,17 @@ const INSTANCE_TYPES: InferObject<Datum> = {
   d: 'date',
 };
 
-const { data: juggledData } = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES); // Better typing for this
+const { data: juggledData } = dataJuggler(FIRST_SAMPLE_DATA, { passedInferTypes: INSTANCE_TYPES }); // Better typing for this
 
 // -------
-test('inferObject', t => {
+test('autoinfer', t => {
+  t.notThrows(() => autoInferenceType(WITH_DATE_SAMPLE_DATA))
+
+  const inferedType = autoInferenceType(WITH_DATE_SAMPLE_DATA)
+  t.deepEqual(inferedType, INSTANCE_TYPES)
+})
+
+test('momets', t => {
   const defaultMoments = generateDefaultMoments(INSTANCE_TYPES);
 
   const EXPECTED_DEFAULT_MOMENTS: MomentsObject<Datum> = {
@@ -135,7 +150,7 @@ test('Custom formatter', t => {
     ]
   };
 
-  const { data: formattedJuggledData } = dataJuggler(FIRST_SAMPLE_DATA, INSTANCE_TYPES, formatter)
+  const { data: formattedJuggledData } = dataJuggler(FIRST_SAMPLE_DATA, { passedInferTypes: INSTANCE_TYPES, formatter })
      // Better typing for this
 
 
@@ -160,6 +175,30 @@ test("Fetching", async t => {
   const unmatchingKeys = !doKeysMatch(data, omit(dataTypes, 'city'))
   t.true(matchingKeys)
   t.true(unmatchingKeys)
-  t.notThrows(()=> dataJuggler(data, dataTypes))
-  t.throws(() => dataJuggler(data, omit(dataTypes, 'city')))
+  t.notThrows(()=> dataJuggler(data, { passedInferTypes: dataTypes }))
+  t.throws(() => dataJuggler(data, { passedInferTypes: omit(dataTypes, 'city') }))
+})
+
+test('parseDates', t => {
+  const dates = [{'d': '2012-12-22'}, {'d': '2013-12-22'}]
+  t.notThrows(() => parseDates(dates, autoInferenceType(dates)))
+  const inferObj = autoInferenceType(dates)
+  const parsedDates = parseDates(dates, inferObj)
+
+  t.deepEqual(parsedDates[0].d, 1356130800)
+})
+
+test('autoinferreddata', t => {
+  t.notThrows(() => dataJuggler(WITH_DATE_SAMPLE_DATA))
+  const { data } = dataJuggler(WITH_DATE_SAMPLE_DATA)
+  const djs = dayjs('2018-02-20')
+  const expectedDFirst = {
+    dateTime: djs,
+    isValid: true,
+    iso: djs.format('DD-MM-YYYY'),
+    raw: djs.unix(),
+    scaled: 0
+  };
+  t.deepEqual(data[0].d, expectedDFirst)
+
 })
