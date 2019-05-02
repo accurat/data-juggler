@@ -33,16 +33,19 @@ export type JuggledData<D> = Array<
  */
 export function dataJuggler<T>(
   unparsedDataset: Array<GenericDatum<T>>,
-  { types, formatter }: JuggleConfig<T> = {}
+  config: JuggleConfig<T> = {}
 ): {
   data: JuggledData<T>;
   moments: MomentsObject<T>;
   types: InferObject<T>;
 } {
+  const { types = {}, formatter } = config;
   const filledDataSet = populateNullData(unparsedDataset);
 
-  const inferedTypes = types || autoInferenceType(unparsedDataset);
-  // TODO: Infer only keys not present in "types"
+  const inferedTypes = autoInferenceType(
+    unparsedDataset,
+    types as InferObject<T>
+  );
 
   if (!doKeysMatch(unparsedDataset, inferedTypes)) {
     throw new Error(MISMATCH_KEY);

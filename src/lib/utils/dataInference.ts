@@ -1,11 +1,12 @@
 import dayjs from 'dayjs';
-import { entries } from 'lodash';
+import { entries, keys } from 'lodash';
 import { isNull, isNumber } from 'util';
 import {
   CategoricalDatum,
   ContinuousDatum,
   DatetimeDatum,
   DatumType,
+  InferObject,
   MomentsType,
   NormalizingCategorical,
   NormalizingContinuous,
@@ -120,16 +121,20 @@ function detectArrayType<T>(
 }
 
 export function autoInferenceType<T>(
-  data: Array<GenericDatum<T>>
-): { [P in keyof T]: 'continuous' | 'categorical' | 'date' } {
+  data: Array<GenericDatum<T>>,
+  existingObj: InferObject<T>
+): InferObject<T> {
   const incomingKeys = [...getAllKeys(data)];
-  const keyType: Array<[keyof T, DatumType]> = incomingKeys.map(key => {
-    const variableData = data.map(d => d[key]);
-    const detectedType = detectArrayType(variableData);
-    return detectedType === 'unknown'
-      ? [key, 'categorical']
-      : [key, detectedType];
-  });
+  const passedKeys = new Set(keys(existingObj));
+  const keyType: Array<[keyof T, DatumType]> = incomingKeys
+    .filter(k => !passedKeys.has(k))
+    .map(key => {
+      const variableData = data.map(d => d[key]);
+      const detectedType = detectArrayType(variableData);
+      return detectedType === 'unknown'
+        ? [key, 'categorical']
+        : [key, detectedType];
+    });
 
-  return fromPairs(keyType);
+  return { ...fromPairs(keyType), ...passedKeys };
 }
