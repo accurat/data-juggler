@@ -1,11 +1,11 @@
 import dayjs from 'dayjs';
-import { entries } from 'lodash'
+import { entries } from 'lodash';
 import { isNull, isNumber } from 'util';
 import {
   CategoricalDatum,
   ContinuousDatum,
   DatetimeDatum,
-  InferType,
+  DatumType,
   MomentsType,
   NormalizingCategorical,
   NormalizingContinuous,
@@ -39,11 +39,11 @@ export const isCategorical = (
 ): moment is NormalizingCategorical =>
   hasMultipleProperties(moment, ['frequencies']);
 
-export type GenericDatumValue = number | string | boolean | null
+export type GenericDatumValue = number | string | boolean | null;
 
 export type GenericDatum<T extends StringKeyedObj> = {
   [key in keyof T]: GenericDatumValue
-}
+};
 
 export function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
   return dayjs.isDayjs(dateObj) ? dateObj.isValid() : false;
@@ -60,61 +60,76 @@ export type GenericFormattingFunction = (
   row?: {
     [variable: string]: CategoricalDatum | ContinuousDatum | DatetimeDatum;
   }
-) => string
+) => string;
 
 export type FormatterObject<T extends StringKeyedObj> = {
   [variable in keyof T]?: Array<{
     name: string;
     formatter: GenericFormattingFunction;
-  }>;
-}
+  }>
+};
 
-function detectValue(value: string | number | boolean | dayjs.Dayjs | Date | null): InferType | 'unknown' {
-  if (isNull(value) || typeof value === 'boolean') { return 'unknown' }
+export type ParserObject<T extends StringKeyedObj> = {
+  [variable in keyof T]?: <I, O>(raw: I) => O
+};
+
+function detectValue(
+  value: string | number | boolean | dayjs.Dayjs | Date | null
+): DatumType | 'unknown' {
+  if (isNull(value) || typeof value === 'boolean') {
+    return 'unknown';
+  }
 
   if (isNumber(value)) {
-    return 'continuous'
+    return 'continuous';
   } else if (dayjs(value).isValid()) {
-    return 'date'
+    return 'date';
   } else {
-    return 'categorical'
+    return 'categorical';
   }
 }
 
-function detectArrayType<T>(column: Array<GenericDatum<T>[keyof T]>): InferType | 'unknown' {
-  const columnProbs = column.reduce((acc, value) => {
-    const t = detectValue(value)
-    return {
-      ...acc,
-      ...(t === 'unknown' && {unknown: acc.unknown + 1}),
-      ...(t === 'categorical' && {categorical: acc.categorical + 1}),
-      ...(t === 'continuous' && {continuous: acc.continuous + 1}),
-      ...(t === 'date' && {date: acc.date + 1}),
-    }
-  },
+function detectArrayType<T>(
+  column: Array<GenericDatum<T>[keyof T]>
+): DatumType | 'unknown' {
+  const columnProbs = column.reduce(
+    (acc, value) => {
+      const t = detectValue(value);
+      return {
+        ...acc,
+        ...(t === 'unknown' && { unknown: acc.unknown + 1 }),
+        ...(t === 'categorical' && { categorical: acc.categorical + 1 }),
+        ...(t === 'continuous' && { continuous: acc.continuous + 1 }),
+        ...(t === 'date' && { date: acc.date + 1 })
+      };
+    },
     {
       categorical: 0,
       continuous: 0,
       date: 0,
       unknown: 0
-    })
+    }
+  );
 
-  const { maxK } = entries(columnProbs)
-    .reduce((acc, [k, v]) =>
-      v > acc.maxV ? { maxK: k, maxV: v } : acc,
-      { maxK: 'categorical', maxV: 0 });
+  const { maxK } = entries(columnProbs).reduce(
+    (acc, [k, v]) => (v > acc.maxV ? { maxK: k, maxV: v } : acc),
+    { maxK: 'categorical', maxV: 0 }
+  );
 
-  return maxK as InferType | 'unknown'
+  return maxK as DatumType | 'unknown';
 }
 
-export function autoInferenceType<T>(data: Array<GenericDatum<T>>)
-: { [P in keyof T]: "continuous" | "categorical" | "date" } {
-  const incomingKeys = [...getAllKeys(data)]
-  const keyType: Array<[keyof T, InferType]> = incomingKeys.map(key => {
-    const variableData = data.map(d => d[key])
-    const detectedType = detectArrayType(variableData)
-    return detectedType === 'unknown' ? [key, 'categorical'] : [key, detectedType]
-  })
+export function autoInferenceType<T>(
+  data: Array<GenericDatum<T>>
+): { [P in keyof T]: 'continuous' | 'categorical' | 'date' } {
+  const incomingKeys = [...getAllKeys(data)];
+  const keyType: Array<[keyof T, DatumType]> = incomingKeys.map(key => {
+    const variableData = data.map(d => d[key]);
+    const detectedType = detectArrayType(variableData);
+    return detectedType === 'unknown'
+      ? [key, 'categorical']
+      : [key, detectedType];
+  });
 
-  return fromPairs(keyType)
+  return fromPairs(keyType);
 }

@@ -1,4 +1,4 @@
-import { Dayjs } from "dayjs";
+import { Dayjs } from 'dayjs';
 
 export type ValueOf<T> = T[keyof T];
 
@@ -23,29 +23,31 @@ export interface MapTypeInfer {
   date: NormalizingDatetime;
 }
 
-export type InferType = keyof MapTypeInfer;
+export type DatumType = keyof MapTypeInfer;
 export type MomentsType = ValueOf<MapTypeInfer>;
 
-export type MapSchema<T extends InferType> = MapTypeInfer[T];
+export type MapSchema<T extends DatumType> = MapTypeInfer[T];
 
-export interface StringKeyedObj { [key: string]: unknown }
+export interface StringKeyedObj {
+  [key: string]: unknown;
+}
 
 export type InferObject<T extends StringKeyedObj> = {
-  [V in keyof T]: InferType
-}
+  [V in keyof T]: DatumType
+};
 interface FormattedProperties {
-  [customForms: string]: string | number | null | Dayjs | boolean
+  [customForms: string]: string | number | null | Dayjs | boolean;
 }
 
 export type ContinuousDatum = {
   raw: number;
   scaled: number | null;
-  [x: string]: number | null | string
-} & FormattedProperties
+  [x: string]: number | null | string;
+} & FormattedProperties;
 
 export type CategoricalDatum = {
   raw: string;
-} & FormattedProperties
+} & FormattedProperties;
 
 export type DatetimeDatum = {
   raw: number;
@@ -53,15 +55,15 @@ export type DatetimeDatum = {
   dateTime: Dayjs;
   scaled: number | null;
   isValid: boolean;
-} & FormattedProperties
+} & FormattedProperties;
 
 export type CollapsedDatum<T extends StringKeyedObj> = {
-  [variable in keyof T]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
-}
+  [variable in keyof T]: ContinuousDatum | CategoricalDatum | DatetimeDatum
+};
 
 export type MomentsObject<T extends StringKeyedObj> = {
   [variable in keyof T]: MomentsType
-}
+};
 
 export interface DatetimeParse {
   generate?: (unix: number) => unknown;

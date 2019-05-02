@@ -42,6 +42,7 @@ export function dataJuggler<T>(
   const filledDataSet = populateNullData(unparsedDataset);
 
   const inferedTypes = types || autoInferenceType(unparsedDataset);
+  // TODO: Infer only keys not present in "types"
 
   if (!doKeysMatch(unparsedDataset, inferedTypes)) {
     throw new Error(MISMATCH_KEY);
