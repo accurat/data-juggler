@@ -19,7 +19,7 @@ const MISMATCH_KEY =
   'It seems like the data keys and the types object you passed do not match!';
 
 interface JuggleConfig<T> {
-  passedInferTypes?: InferObject<T>;
+  types?: InferObject<T>;
   formatter?: FormatterObject<T>;
 }
 
@@ -33,21 +33,21 @@ export type JuggledData<D> = Array<
  */
 export function dataJuggler<T>(
   unparsedDataset: Array<GenericDatum<T>>,
-  { passedInferTypes, formatter }: JuggleConfig<T> = {}
+  { types, formatter }: JuggleConfig<T> = {}
 ): {
   data: JuggledData<T>;
   moments: MomentsObject<T>;
-  inferedTypes: InferObject<T>;
+  types: InferObject<T>;
 } {
   const filledDataSet = populateNullData(unparsedDataset);
 
-  const inferedTypes = passedInferTypes || autoInferenceType(unparsedDataset);
+  const inferedTypes = types || autoInferenceType(unparsedDataset);
 
   if (!doKeysMatch(unparsedDataset, inferedTypes)) {
     throw new Error(MISMATCH_KEY);
   }
 
-  const dataSet = passedInferTypes
+  const dataSet = types
     ? filledDataSet
     : parseDates(filledDataSet, inferedTypes);
   const moments = computeMoments(dataSet, inferedTypes);
@@ -56,5 +56,5 @@ export function dataJuggler<T>(
 
   const data = dataSet.map(datum => datumPreprocessor(datum));
 
-  return { data, moments, inferedTypes };
+  return { data, moments, types: inferedTypes };
 }
