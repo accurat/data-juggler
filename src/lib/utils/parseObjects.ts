@@ -6,7 +6,7 @@ import { getAllKeys } from "./stats";
 // tslint:disable:no-object-mutation
 // tslint:disable:no-object-literal-type-assertion
 
-export function fromPairs<K extends string, V>(pairs: Array<[K, V]>): {[P in K]: V} {
+export function fromPairs<K extends string, V>(pairs: Array<[K, V]>): Record<K, V> {
   const newObj = {} as {[P in K]: V}
   pairs.forEach(([key, value]) => { newObj[key] = value })
 
@@ -38,13 +38,16 @@ export function doKeysMatch<T>(dataSet: Array<GenericDatum<T>>, inferObject: Inf
   return equalSets(incomingKeys, expectedKeys)
 }
 
-export function conditionalValueMap<K extends string, V, O>(
-  obj: { [k in K]: V },
-  paradigm: (k: K, v: V) => boolean,
-  fn: (k: K, v: V) => [K, O]
-  ): { [P in K]: V | O; } {
-    const pairs: Array<[K, O]> | Array<[K, V]> = toPairs(obj)
-    const newPairs = pairs.map<[K, O | V]>(([k, v]) => paradigm(k, v) ? fn(k, v) : [k, v])
-    return fromPairs(newPairs)
+function mapWithIndex<K extends string, A, B>(r: Record<K, A>, fn: (k: K, a: A) => B): Record<K, B > {
+  const parsedPairs: Array<[K, B]> = toPairs(r).map(([k, v]) => [k, fn(k, v)])
+  return fromPairs(parsedPairs)
 }
 
+
+export function conditionalValueMap<K extends string, S extends I, I, O>(
+  r: Record<K, I>,
+  paradigm: (k: K, a: I) => a is S,
+  fn: (k: K, f: S) => O
+): Record<K, I | O> {
+  return mapWithIndex(r, (k, a) => (paradigm(k, a) ? fn(k, a) : a))
+}

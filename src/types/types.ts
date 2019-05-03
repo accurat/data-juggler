@@ -50,7 +50,7 @@ export type CategoricalDatum = {
 } & FormattedProperties;
 
 export type DatetimeDatum = {
-  raw: number;
+  raw: number | null;
   iso: string;
   dateTime: Dayjs;
   scaled: number | null;

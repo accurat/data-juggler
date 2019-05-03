@@ -2,7 +2,8 @@ import { parseDates, parseDatumFactory } from './parse';
 import {
   autoInferenceType,
   FormatterObject,
-  GenericDatum
+  GenericDatum,
+  ParserObject
 } from './utils/dataInference';
 
 import {
@@ -19,8 +20,9 @@ const MISMATCH_KEY =
   'It seems like the data keys and the types object you passed do not match!';
 
 interface JuggleConfig<T> {
-  types?: InferObject<T>;
-  formatter?: FormatterObject<T>;
+  types?: InferObject<T>
+  formatter?: FormatterObject<T>
+  parser?: ParserObject<T>
 }
 
 export type JuggledData<D> = Array<
@@ -39,7 +41,7 @@ export function dataJuggler<T>(
   moments: MomentsObject<T>;
   types: InferObject<T>;
 } {
-  const { types = {}, formatter } = config;
+  const { types = {}, formatter, parser = {}} = config;
   const filledDataSet = populateNullData(unparsedDataset);
 
   const inferedTypes = autoInferenceType(
@@ -53,10 +55,11 @@ export function dataJuggler<T>(
 
   const dataSet = types
     ? filledDataSet
-    : parseDates(filledDataSet, inferedTypes);
+    : parseDates(filledDataSet, inferedTypes, parser);
+
   const moments = computeMoments(dataSet, inferedTypes);
 
-  const datumPreprocessor = parseDatumFactory(inferedTypes, moments, formatter);
+  const datumPreprocessor = parseDatumFactory(inferedTypes, moments, formatter, parser);
 
   const data = dataSet.map(datum => datumPreprocessor(datum));
 

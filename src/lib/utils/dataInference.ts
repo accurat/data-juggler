@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
-import { entries, keys } from 'lodash';
-import { isNull, isNumber } from 'util';
+import { entries, isNull, isNumber, keys } from 'lodash';
 import {
   CategoricalDatum,
   ContinuousDatum,
@@ -15,6 +14,11 @@ import {
 } from '../../types/types';
 import { fromPairs } from './parseObjects';
 import { getAllKeys } from './stats';
+
+// tslint:disable-next-line:no-submodule-imports
+import CustomParseFormat from 'dayjs/plugin/CustomParseFormat' // load on demand
+// tslint:disable-next-line:no-expression-statement
+dayjs.extend(CustomParseFormat) // use plugin
 
 /** @hidden */
 function hasMultipleProperties(
@@ -70,8 +74,10 @@ export type FormatterObject<T extends StringKeyedObj> = {
   }>
 };
 
+export type ParserFunction = (raw: any) => any
+
 export type ParserObject<T extends StringKeyedObj> = {
-  [variable in keyof T]?: <I, O>(raw: I) => O
+  [variable in keyof T]?: ParserFunction
 };
 
 function detectValue(
@@ -122,19 +128,20 @@ function detectArrayType<T>(
 
 export function autoInferenceType<T>(
   data: Array<GenericDatum<T>>,
-  existingObj: InferObject<T>
+  existingObj: InferObject<T> | {}
 ): InferObject<T> {
-  const incomingKeys = [...getAllKeys(data)];
-  const passedKeys = new Set(keys(existingObj));
+  const incomingKeys = [...getAllKeys(data)]
+
+  const passedKeys = new Set(keys(existingObj))
   const keyType: Array<[keyof T, DatumType]> = incomingKeys
-    .filter(k => !passedKeys.has(k))
-    .map(key => {
+  .filter(k => !passedKeys.has(k))
+  .map(key => {
       const variableData = data.map(d => d[key]);
       const detectedType = detectArrayType(variableData);
       return detectedType === 'unknown'
         ? [key, 'categorical']
-        : [key, detectedType];
+        : [key, detectedType]
     });
 
-  return { ...fromPairs(keyType), ...passedKeys };
+  return { ...fromPairs(keyType), ...existingObj };
 }

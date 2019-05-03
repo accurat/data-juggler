@@ -1,11 +1,18 @@
-import { isNull, max as _max, min as _min, toString } from 'lodash';
+import { get, isNaN, isNull, max as _max, min as _min, toString } from 'lodash';
 
 import dayjs from 'dayjs';
+
+// tslint:disable-next-line:no-submodule-imports
+import CustomParseFormat from 'dayjs/plugin/CustomParseFormat' // load on demand
+// tslint:disable-next-line:no-expression-statement
+dayjs.extend(CustomParseFormat) // use plugin
 
 import {
   FormatterObject,
   GenericDatum,
   GenericDatumValue,
+  ParserFunction,
+  ParserObject,
   valiDate
 } from './utils/dataInference';
 
@@ -34,10 +41,27 @@ type ParsedDatum<T> = {
   [P in keyof T]: ContinuousDatum | DatetimeDatum | CategoricalDatum
 };
 
+export const identity = <I>(t: I):I => t
+
+const defaultParseDate = (d: unknown) => {
+  switch(typeof d) {
+    case 'number':
+      return d
+    case 'string':
+      return dayjs(d).unix()
+    case 'object': // null case for fuck sake javascript
+      return 0
+
+    default:
+      return 0
+  }
+}
+
 export function parseDatumFactory<T extends StringKeyedObj>(
   inferObject: InferObject<T>,
   moments: MomentsObject<T>,
-  formatterObject?: FormatterObject<T>
+  formatterObject?: FormatterObject<T>,
+  parser?: ParserObject<T>
 ): (snapshot: GenericDatum<T>) => ParsedDatum<T> {
   return snapshot => {
     return fromPairs(
@@ -52,11 +76,14 @@ export function parseDatumFactory<T extends StringKeyedObj>(
               ? formatterObject[variable]
               : [];
 
+          const parse: ParserFunction | typeof identity = get(parser, variable, identity)
+          const parseDate = get(parser, variable, defaultParseDate)
+
           switch (inference) {
             case 'continuous': {
               const { min, max } = moments[variable] as NormalizingContinuous;
               const datum: ContinuousDatum = {
-                raw: value as number, // FIXME: Better typing, link this to inference
+                raw: parse(value), // FIXME: Better typing, link this to inference
                 get scaled(): number {
                   return !isNull(min) && !isNull(max)
                     ? (this.raw - min) / (max - min)
@@ -80,11 +107,11 @@ export function parseDatumFactory<T extends StringKeyedObj>(
             }
             case 'date': {
               const { min, max } = moments[variable] as NormalizingDatetime;
-
+              const rawValue = parseDate(value)
               const datum: DatetimeDatum = {
-                raw: value as number,
+                raw: !isNaN(rawValue) ? rawValue : null,
                 get dateTime(): dayjs.Dayjs {
-                  return dayjs.unix(this.raw);
+                  return dayjs.unix(Number(value) || 0);
                 },
                 get isValid(): boolean {
                   return valiDate(this.dateTime);
@@ -93,9 +120,9 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                   return this.dateTime.format('DD-MM-YYYY');
                 },
                 get scaled(): number | null {
-                  return !isNull(min) && !isNull(max)
-                    ? (this.raw - min) / (max - min)
-                    : this.raw;
+                  return !isNull(min) && !isNull(max) && !isNull(this.raw)
+                    ? (Number(value) - min) / (max - min)
+                    : 0;
                 }
               };
 
@@ -116,7 +143,7 @@ export function parseDatumFactory<T extends StringKeyedObj>(
 
             case 'categorical': {
               const stringValue = toString(value);
-              const datum: CategoricalDatum = { raw: stringValue };
+              const datum: CategoricalDatum = { raw: parse(stringValue) as string };
               const { frequencies } = moments[
                 variable
               ] as NormalizingCategorical;
@@ -144,22 +171,25 @@ export function parseDatumFactory<T extends StringKeyedObj>(
 
 export function parseDates<T>(
   rawData: Array<GenericDatum<T>>,
-  inferTypes: InferObject<T>
+  inferTypes: InferObject<T>,
+  parser: ParserObject<T>,
 ): Array<{ [P in keyof T]: GenericDatumValue }> {
   const dateKeys = toPairs(inferTypes)
     .filter(([__, t]) => t === 'date')
     .map(([v, __]) => v);
 
-  const isPairDate = <K extends keyof T>(key: K): boolean =>
+  const isPairDate = <K extends keyof T, S>(key: K, _: unknown): _ is S =>
     dateKeys.includes(key);
 
-  const makeDayjs = <K extends keyof T, V>(key: K, value: V): [K, number] => [
-    key,
-    dayjs(String(value)).unix()
-  ];
+  const makeDayjs = <K extends keyof T, V>(key: K, value: V): number =>
+    get(
+      parser,
+      key,
+      (v: V) => !isNaN(dayjs(String(v)).unix()) ? dayjs(String(v)).unix() : null
+    )(value)
 
   return rawData.map(datum =>
-    conditionalValueMap<keyof T, GenericDatumValue, number>(
+    conditionalValueMap<keyof T, number, GenericDatumValue, number>(
       datum,
       isPairDate,
       makeDayjs
