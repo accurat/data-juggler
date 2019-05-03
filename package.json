@@ -1,6 +1,6 @@
 {
   "name": "data-juggler",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@types/lodash": "^4.14.122",
-    "dayjs": "^1.8.10",
+    "dayjs": "^1.8.13",
     "lodash": "^4.17.11",
     "trash": "^5.0.0"
   },

@@ -16,7 +16,7 @@ import { fromPairs } from './parseObjects';
 import { getAllKeys } from './stats';
 
 // tslint:disable-next-line:no-submodule-imports
-import CustomParseFormat from 'dayjs/plugin/CustomParseFormat' // load on demand
+import CustomParseFormat from 'dayjs/plugin/customParseFormat' // load on demand
 // tslint:disable-next-line:no-expression-statement
 dayjs.extend(CustomParseFormat) // use plugin
 
