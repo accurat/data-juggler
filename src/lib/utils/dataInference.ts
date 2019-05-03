@@ -80,14 +80,22 @@ export type ParserObject<T extends StringKeyedObj> = {
   [variable in keyof T]?: ParserFunction
 };
 
+function inferIsNumber (value: string | number | boolean | dayjs.Dayjs | Date | null):boolean {
+  if (typeof value === 'string') {
+    const n = +value
+    return !isNaN(n) && typeof n === 'number'
+  } else return false
+}
+
 function detectValue(
   value: string | number | boolean | dayjs.Dayjs | Date | null
 ): DatumType | 'unknown' {
-  if (isNull(value) || typeof value === 'boolean') {
+
+  if (!value || isNull(value) || typeof value === 'boolean') {
     return 'unknown';
   }
 
-  if (isNumber(value)) {
+  if (isNumber(value) || inferIsNumber(value)) {
     return 'continuous';
   } else if (dayjs(value).isValid()) {
     return 'date';
@@ -131,7 +139,6 @@ export function autoInferenceType<T>(
   existingObj: InferObject<T> | {}
 ): InferObject<T> {
   const incomingKeys = [...getAllKeys(data)]
-
   const passedKeys = new Set(keys(existingObj))
   const keyType: Array<[keyof T, DatumType]> = incomingKeys
   .filter(k => !passedKeys.has(k))
@@ -142,6 +149,5 @@ export function autoInferenceType<T>(
         ? [key, 'categorical']
         : [key, detectedType]
     });
-
   return { ...fromPairs(keyType), ...existingObj };
 }
