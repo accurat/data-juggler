@@ -1,4 +1,6 @@
-# data-juggler
+# data-juggler 🤹‍♀️
+
+_all life is fermentation - Feynman_
 
 This library serves little purpose, like all of us and everything we do, but is a bit covered and tested, as you can see.
 
@@ -34,7 +36,7 @@ types = {
   timeOfMeasure: 'date'
 };
 
-const dataset = dataJuggler(data, types);
+const { data, moments } = dataJuggler(data, { types });
 ```
 
 Launch the `dataJuggler` function with the sample data and instance types, and enjoy a beutiful dataset full of getters and stuff with everything that you need in it (this is, at least for now, a lie).
@@ -45,7 +47,7 @@ You'll get your data back (don't worry) with added properties!
 
 ```javascript
 
-const instance = dataset[0]
+const instance = data[0]
 
 instance === {
   height: {
@@ -58,7 +60,7 @@ instance === {
   timeOfMeasure: {
     dateTime: // the day js instance of the dataset,
     isValid: true,
-    iso: '2019-03-12T14:37:13+01:00',
+    iso: '2019-03-12',
     raw: 1552397832139,
     scaled: 1
   }
@@ -71,9 +73,30 @@ On top of that you also get some getters for each variable that return the whole
 
 Edit: the censorship did happen, this is not there anymore.
 
+## The configuration object
+
+The library accepts as a second parameter a config object of the form
+
+```javascript
+const config = {
+  types,
+  formatter: [{ 'height': [/*stuff*/]}],
+  parser: { 'height': (cm: number) => /*more stuff*/ }
+}
+
+const { data, moments, types } = dataJuggler(data, {...config});
+
+```
+
+As in the example above the `types` object is rather explanatory! Let's look at the other ones, but first...
+
+### Annoyed by having to pass the types yourself? Look no further!
+
+If you feel adventurous you can only pass the data without any `types` in the `config` object and our advanced (read naive) detecting system will try and determine, mostly leveraging the awesome [dayjs](https://github.com/iamkun/dayjs) ⏰ library, the type for you and then pass it as key `types` in the object returned by the function.
+
 ### Custom formatter
 
-You can also pass a custom formatter for each column type as follow:
+You can also pass a custom formatter for each column type as follow.
 
 ```javascript
 
@@ -94,7 +117,7 @@ formatter = {
 
 //  if we look for the same instance as before
 
-const dataStore = dataStoreFactory(data, types, formatter);
+const dataStore = dataJuggler(data, types, formatter);
 
 instance === {
   height: {
@@ -115,4 +138,21 @@ instance === {
 
 // true
 
+```
+
+### Custom parser
+
+What if the data you are passing is not parsed correctly by the library. Once again, no worries! Just pass the parser yourself, the typechecker should prevent you from breaking everything, but hey, what do I know?
+
+```javascript
+  const { data: correctlyParsedData } = dataJuggler(datasetWithDates, {
+    parser: {
+      d: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()
+    }
+  })
+  const { data: wronglyParsedData } = dataJuggler(datasetWithDates, {
+    parser: {
+      d: (day: string) => dayjs(day, 'MM-DD-YYYY').unix()
+    }
+  })
 ```
