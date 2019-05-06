@@ -7,7 +7,7 @@ import { isNumber , range, toNumber, toString, isNaN  } from 'lodash';
 import fetch from 'node-fetch';
 import { dataJuggler } from '..';
 import { InferObject, MomentsObject } from '../types/types';
-import { autoInferenceType, FormatterObject } from './utils/dataInference';
+import { autoInferenceType, FormatterObject, detectValue, selectTypeFromFrequencies } from './utils/dataInference';
 // ParseObjectType
 import {
   computeMoments,
@@ -225,4 +225,57 @@ test('juggle with parser', t => {
 
   t.deepEqual(correctlyParsedData[0].d.raw, dayjs(WITH_DATE_SAMPLE_DATA[0].d).unix())
   t.deepEqual(wronglyParsedData[0].d.raw, null)
+})
+
+test('Infer cont column with almost all null', t => {
+  const d = [{a: null}, {a: null}, {a: 3}]
+  const { types } = dataJuggler(d)
+  t.deepEqual(types.a, 'continuous')
+})
+
+test('Infer categorical column with almost all null', t => {
+  const d = [{a: null}, {a: null}, {a: 'ciao'}]
+  const { types } = dataJuggler(d)
+  t.deepEqual(types.a, 'categorical')
+})
+
+test('Infer date column with almost all null, should be not date!', t => {
+  const d = [{a: null}, {a: null}, {a: '12-02-2018'}]
+  const { types } = dataJuggler(d)
+
+  t.notDeepEqual(types.a, 'date')
+})
+
+
+// DATES
+
+test('Detect single date', t => {
+  const date = '17-02-2019'
+  const parserFn = (p: string) => dayjs(p, 'DD-MM-YYYY').unix()
+  const wrong = detectValue(date, (i) => i)
+  const right = detectValue(date, parserFn)
+
+  t.true(dayjs(parserFn(date) * 1000).isValid())
+  t.notDeepEqual(wrong, 'date')
+  t.deepEqual(right, 'date')
+
+})
+
+test('Frequencies type object', t => {
+  const obj = {
+    categorical: 0,
+    continuous: 0,
+    date: 3,
+    unknown: 0
+  }
+
+  const dFr = selectTypeFromFrequencies(obj)
+  t.deepEqual(dFr, 'date')
+})
+
+test('Infer date column, should be date!', t => {
+  const d = [{a: '13-02-2018'}, {a: '15-02-2018'}, {a: '12-02-2018'}]
+  const { types } = dataJuggler(d, { parser: { a: (x: string) => dayjs(x, 'DD-MM-YYYY').unix() } })
+
+  t.deepEqual(types.a, 'date')
 })
