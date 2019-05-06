@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { entries, isNull, isNumber, keys } from 'lodash';
+import { entries, isFinite, isNaN, isNull, keys } from 'lodash';
 import {
   CategoricalDatum,
   ContinuousDatum,
@@ -80,11 +80,12 @@ export type ParserObject<T extends StringKeyedObj> = {
   [variable in keyof T]?: ParserFunction
 };
 
-function inferIsNumber (value: string | number | boolean | dayjs.Dayjs | Date | null):boolean {
-  if (typeof value === 'string') {
-    const n = +value
-    return !isNaN(n) && typeof n === 'number'
-  } else return false
+function inferIfStringIsNumber (value: unknown): boolean {
+  return typeof value === 'string' ? !isNaN(Number(value)) : false
+}
+
+function inferIsNumber(value: unknown): boolean {
+  return isFinite(value) || inferIfStringIsNumber(value)
 }
 
 function detectValue(
@@ -95,7 +96,7 @@ function detectValue(
     return 'unknown';
   }
 
-  if (isNumber(value) || inferIsNumber(value)) {
+  if (inferIsNumber(value)) {
     return 'continuous';
   } else if (dayjs(value).isValid()) {
     return 'date';
