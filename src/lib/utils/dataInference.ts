@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { entries, isFinite, isNaN, isNull, keys } from 'lodash';
+import { get, isFinite, isNaN, isNull, keys } from 'lodash';
 import {
   CategoricalDatum,
   ContinuousDatum,
@@ -88,8 +88,9 @@ function inferIsNumber(value: unknown): boolean {
   return isFinite(value) || inferIfStringIsNumber(value)
 }
 
-function detectValue(
-  value: string | number | boolean | dayjs.Dayjs | Date | null
+export function detectValue(
+  value: string | number | boolean | dayjs.Dayjs | Date | null,
+  p: ParserFunction
 ): DatumType | 'unknown' {
 
   if (!value || isNull(value) || typeof value === 'boolean') {
@@ -98,19 +99,40 @@ function detectValue(
 
   if (inferIsNumber(value)) {
     return 'continuous';
-  } else if (dayjs(value).isValid()) {
+  } else if (dayjs(p(value) * 1000).isValid() || dayjs(value).isValid()) {
     return 'date';
   } else {
     return 'categorical';
   }
 }
 
-function detectArrayType<T>(
-  column: Array<GenericDatum<T>[keyof T]>
-): DatumType | 'unknown' {
-  const columnProbs = column.reduce(
+interface Frequencies {
+  categorical: number
+  continuous: number
+  date: number
+  unknown: number
+}
+
+export function selectTypeFromFrequencies(fr: Frequencies): DatumType {
+  // To be date, no unknown can be present, to be continuous the same condition does not apply
+  switch (true) {
+    case fr.unknown === 0 && fr.categorical === 0 && fr.continuous === 0 && fr.date > 0:
+      return 'date'
+    case fr.categorical === 0 && fr.date === 0 && fr.continuous > 0:
+      return 'continuous'
+    default:
+      return 'categorical'
+  }
+}
+
+export function detectArrayType<T>(
+  column: Array<GenericDatum<T>[keyof T]>,
+  p: ParserFunction
+): DatumType {
+  const columnProbs = column.reduce<Frequencies>(
     (acc, value) => {
-      const t = detectValue(value);
+      const t = detectValue(value, p);
+
       return {
         ...acc,
         ...(t === 'unknown' && { unknown: acc.unknown + 1 }),
@@ -127,28 +149,22 @@ function detectArrayType<T>(
     }
   );
 
-  const { maxK } = entries(columnProbs).reduce(
-    (acc, [k, v]) => (v > acc.maxV ? { maxK: k, maxV: v } : acc),
-    { maxK: 'categorical', maxV: 0 }
-  );
-
-  return maxK as DatumType | 'unknown';
+  return selectTypeFromFrequencies(columnProbs)
 }
 
 export function autoInferenceType<T>(
   data: Array<GenericDatum<T>>,
-  existingObj: InferObject<T> | {}
+  existingObj: InferObject<T> | {} = {},
+  parser: ParserObject<T> = {}
 ): InferObject<T> {
   const incomingKeys = [...getAllKeys(data)]
   const passedKeys = new Set(keys(existingObj))
   const keyType: Array<[keyof T, DatumType]> = incomingKeys
   .filter(k => !passedKeys.has(k))
   .map(key => {
+      const p = get(parser, key, (v: unknown) => v)
       const variableData = data.map(d => d[key]);
-      const detectedType = detectArrayType(variableData);
-      return detectedType === 'unknown'
-        ? [key, 'categorical']
-        : [key, detectedType]
+      return [key, detectArrayType(variableData, p)];
     });
   return { ...fromPairs(keyType), ...existingObj };
 }

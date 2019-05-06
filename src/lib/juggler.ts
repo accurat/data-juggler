@@ -46,7 +46,8 @@ export function dataJuggler<T>(
 
   const inferedTypes = autoInferenceType(
     unparsedDataset,
-    types as InferObject<T>
+    types as InferObject<T>,
+    parser
   );
 
   if (!doKeysMatch(unparsedDataset, inferedTypes)) {
