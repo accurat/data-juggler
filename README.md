@@ -156,3 +156,30 @@ What if the data you are passing is not parsed correctly by the library. Once ag
     }
   })
 ```
+
+## Using other libary functions
+
+You can of course use other functions from within the library. For example, let's say you want to use the autoinference function and do some operations on it you can simply import it and use it
+
+```javascript
+import { autoInferenceType } from 'data-juggler/build/main/lib/utils/dataInference';
+
+const inferredType = autoInferenceType(yourData, yourTypeObject || {}, yourParser || {})
+
+const { data, momemnts } = dataJuggler(yourData, { types: inferredType })
+```
+
+The types you passed in the config will not be overwritten by the library! The same can be done with other functions like `computeMoments` and `parseDates`. Not sure why you would do that but knock yourself out.
+
+## A more structured Mobx-state-tree example without knowing your datra structure
+
+So far we have been talking about cases where you know your data at "compile time" and neither does Typescript. This hinders the ability of the library to help you structure stuff correctly but all the core functionalities are intact and shining bright. If, for example, you use [Mobx state tree](https://github.com/mobxjs/mobx-state-tree) you could do the following:
+
+```javascript
+export const YourFancyMSTModel = t
+  .model('YourFancyMSTModel', {
+    juggleType: t.frozen<InferObject<YourDataStructure || Record<string, unknown>(),
+    juggledData: t.frozen<JuggledData<YourDataStructure || Record<string, unknown>(),
+    moments: t.frozen<MomentsObject<YourDataStructure || Record<string, unknown>(),
+  })
+```
