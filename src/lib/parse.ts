@@ -111,7 +111,7 @@ export function parseDatumFactory<T extends StringKeyedObj>(
               const datum: DatetimeDatum = {
                 raw: !isNaN(rawValue) ? rawValue : null,
                 get dateTime(): dayjs.Dayjs {
-                  return dayjs.unix(Number(value) || 0);
+                  return dayjs.unix(Number(rawValue));
                 },
                 get isValid(): boolean {
                   return valiDate(this.dateTime);
@@ -121,7 +121,7 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                 },
                 get scaled(): number | null {
                   return !isNull(min) && !isNull(max) && !isNull(this.raw)
-                    ? (Number(value) - min) / (max - min)
+                    ? (Number(rawValue) - min) / (max - min)
                     : 0;
                 }
               };

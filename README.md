@@ -49,7 +49,7 @@ You'll get your data back (don't worry) with added properties!
 
 const instance = data[0]
 
-instance === {
+t.deepEqual(instance, {
   height: {
     raw: 190,
     scaled: 1
@@ -64,12 +64,12 @@ instance === {
     raw: 1552397832139,
     scaled: 1
   }
-}
+})
 // true
 
 ```
 
-On top of that you also get some getters for each variable that return the whole column, this could be cutted eventually in a censorship attempt by my boss.
+On top of that you also get some getters for each variable that return the whole column, this could be cut eventually in a censorship attempt by my boss.
 
 Edit: the censorship did happen, this is not there anymore.
 
@@ -100,41 +100,46 @@ You can also pass a custom formatter for each column type as follow.
 
 ```javascript
 
-formatter = {
-  height: [{
-    property: 'feet',
-    compute: (datum) => datum * 0.0328084
-  },
-  {
-    property: 'rescaled',
-    compute: (datum, min, max) => datum / max
-  }],
-  timeOfMeasure: [{
-    property: 'year',
-    compute: (day) => day.format('YYYY')
-  }]
+const formatter = {
+  height: [
+    {
+      property: 'feet',
+      compute: (datum) => datum * 0.0328084
+    },
+    {
+      property: 'rescaled',
+      compute: (datum, min, max) => datum / max
+    }
+  ],
+  timeOfMeasure: [
+    {
+      property: 'year',
+      compute: (day) => day.format('YYYY')
+    }
+  ]
 }
 
 //  if we look for the same instance as before
 
-const dataStore = dataJuggler(data, types, formatter);
+const dataStore = dataJuggler(data, { types, formatter });
 
-instance === {
+t.deepEqual(istance, {
   height: {
     raw: 190,
     scaled: 1,
     // newly added
-    feet: 6,233596
+    rescale: 1,
+    feet: 6.233596,
   },
   timeOfMeasure: {
     dateTime: // the day js instance of the dataset,
     isValid: true,
     raw: 1552397832139,
-    scaled: 1
+    scaled: 1,
     // newly added
     year: '2019',
   }
-}
+})
 
 // true
 
@@ -191,6 +196,8 @@ const juggled = dataJuggler<ExpectedDatum>(raw)
 If, for example, you use [Mobx state tree](https://github.com/mobxjs/mobx-state-tree) you could do the following:
 
 ```javascript
+import {} from ''
+
 export const YourFancyMSTModel = t
   .model('YourFancyMSTModel', {
     juggleType: t.frozen<InferObject<YourDataStructure || Record<string, unknown>(),

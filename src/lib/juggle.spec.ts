@@ -275,9 +275,10 @@ test('Frequencies type object', t => {
 
 test('Infer date column, should be date!', t => {
   const d = [{a: '2018-02-02'}, {a: '2018-03-09'}, {a: '2018-03-22'}]
-  const { types } = dataJuggler(d)
+  const { data, types } = dataJuggler(d)
 
   t.deepEqual(types.a, 'date')
+  t.deepEqual(data[0].a.raw, 1517526000)
 })
 
 test('Infer date column, with custom parser, should be date!', t => {
@@ -285,4 +286,11 @@ test('Infer date column, with custom parser, should be date!', t => {
   const { types } = dataJuggler(d, { parser: { a: (x: string) => dayjs(x, 'DD/MM/YYYY').unix() } })
 
   t.deepEqual(types.a, 'date')
+})
+
+test('Another date test', t => {
+  const d = [{timestamp: "2017-06-25", value: 60.55}, {timestamp: "2017-06-26", value: 39.12}, {timestamp: "2017-06-27", value: 6.06}]
+  const { data } = dataJuggler(d)
+
+  t.deepEqual(data[0].timestamp.iso, '25-06-2017')
 })
