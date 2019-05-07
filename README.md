@@ -171,9 +171,24 @@ const { data, momemnts } = dataJuggler(yourData, { types: inferredType })
 
 The types you passed in the config will not be overwritten by the library! The same can be done with other functions like `computeMoments` and `parseDates`. Not sure why you would do that but knock yourself out.
 
-## A more structured Mobx-state-tree example without knowing your datra structure
+## A more structured example, without having the data structure
 
-So far we have been talking about cases where you know your data at "compile time" and neither does Typescript. This hinders the ability of the library to help you structure stuff correctly but all the core functionalities are intact and shining bright. If, for example, you use [Mobx state tree](https://github.com/mobxjs/mobx-state-tree) you could do the following:
+So far we have been talking about cases where you know your data at "compile time" and neither does Typescript. This hinders the ability of the library to help you structure stuff correctly but all the core functionalities are intact and shining bright. Let's assume you need to fetch some data, of which you know the structure but you don't "have" it, you need not to worry! The function `dataJuggler` accepts one generic which is the type of the datum so you can do something like this:
+
+```javascript
+interface ExpectedDatum {
+  height: number,
+  name: string
+}
+
+const raw = ky.get('this.is.a.fancy.end.point.with.many.points.com/get').json()
+const juggled = dataJuggler<ExpectedDatum>(raw)
+
+```
+
+## The Mobx-state-tree in the room
+
+If, for example, you use [Mobx state tree](https://github.com/mobxjs/mobx-state-tree) you could do the following:
 
 ```javascript
 export const YourFancyMSTModel = t
