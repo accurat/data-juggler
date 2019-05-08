@@ -24,7 +24,12 @@ export interface MapTypeInfer {
 }
 
 export type DatumType = keyof MapTypeInfer;
-export type MomentsType = ValueOf<MapTypeInfer>;
+export interface MomentsType {
+  sum: number;
+  min: number | null;
+  max: number | null;
+  frequencies: { readonly [instance: string]: number };
+}
 
 export type MapSchema<T extends DatumType> = MapTypeInfer[T];
 

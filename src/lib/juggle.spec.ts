@@ -85,11 +85,10 @@ test('momets', t => {
   const defaultMoments = generateDefaultMoments(INSTANCE_TYPES);
 
   const EXPECTED_DEFAULT_MOMENTS: MomentsObject<Datum> = {
-    a: { min: null, max: null, sum: 0 },
-    b: { frequencies: {} },
-    c: { min: null, max: null, sum: 0 },
-    d: { min: null, max: null }
-  };
+    a: { min: null, max: null, sum: 0, frequencies: {} },
+    b: { min: null, max: null, sum: 0, frequencies: {} },
+    c: { min: null, max: null, sum: 0, frequencies: {} },
+    d: { min: null, max: null, sum: 0, frequencies: {} },  };
 
   t.deepEqual(EXPECTED_DEFAULT_MOMENTS, defaultMoments);
 });
@@ -105,10 +104,10 @@ test('fn', t => {
 
   const moments = computeMoments(filledSample, INSTANCE_TYPES);
   const EXPECTED_MOMENTS: MomentsObject<Datum> = {
-    a: { min: 1, max: 3, sum: 7.5 },
-    b: { frequencies: { mamma: 1, papà: 2, cugino: 1 } },
-    c: { min: 2, max: 4, sum: 9 },
-    d: { min: DATES_D[3], max: DATES_D[0] }
+    a: { min: 1, max: 3, sum: 7.5, frequencies: {} },
+    b: { frequencies: { mamma: 1, papà: 2, cugino: 1 }, min: null, max: null, sum: 0 },
+    c: { min: 2, max: 4, sum: 9, frequencies: {} },
+    d: { min: DATES_D[3], max: DATES_D[0], frequencies: {}, sum: 0 }
   };
 
   // Filled array tests

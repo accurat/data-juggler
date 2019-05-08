@@ -1,20 +1,11 @@
-import { InferObject, MapTypeInfer, MomentsObject, NormalizingCategorical, NormalizingContinuous, NormalizingDatetime } from '../../types/types'
+import { InferObject, MomentsObject, MomentsType } from '../../types/types'
 import {
   GenericDatum,
   GenericDatumValue,
-  isCategorical,
-  isContinuous,
-  isDatetime
 } from './dataInference'
 
 import { isNull } from 'lodash'
 import { fromPairs, toPairs } from './parseObjects'
-
-const mapParams: MapTypeInfer = {
-  categorical: { frequencies: {} },
-  continuous: { min: null, max: null, sum: 0 },
-  date: { min: null, max: null }
-}
 
 const updateMin = (value: number, min: number) => Math.min(value, min)
 const updateMax = (value: number, max: number) => Math.max(value, max)
@@ -27,7 +18,9 @@ export function generateDefaultMoments<T>(
   inferObject: InferObject<T>
 ): MomentsObject<T> {
   const variables = getKeys(inferObject)
-  const moments = variables.reduce((acc, v) => ({...acc, [v]: mapParams[inferObject[v]]}), {}) as MomentsObject<T>
+  const moments = variables.reduce((acc, v) => ({...acc, [v]: {
+    frequencies: {}, max: null, min: null, sum: 0
+  }}), {}) as MomentsObject<T>
 
   return moments
 }
@@ -53,47 +46,54 @@ export function populateNullData<T> (
 
 export const generateNewMoments = <T>(
   accumulator: MomentsObject<T>,
-  datum: GenericDatum<T>
-): MomentsObject<T>  => {
+  datum: GenericDatum<T>,
+  inferObject: InferObject<T>
+)  => {
   return fromPairs(toPairs(datum).map(([variable, value]:[keyof T, GenericDatumValue]) => {
     const variableMoments = accumulator[variable]
 
-    if (isCategorical(variableMoments) && typeof value === 'string') {
+    if (inferObject[variable] === 'categorical' && typeof value === 'string') {
       const { frequencies } = variableMoments
       const newFrequencies = {
         ...frequencies,
         [value]: frequencies[value] ? frequencies[value] + 1 : 1
       }
-      const newFrequencyMoments: NormalizingCategorical = {
-        frequencies: newFrequencies
+      const newFrequencyMoments = {
+        frequencies: newFrequencies,
+        max: null,
+        min: null,
+        sum: 0
       }
 
-      return [variable, newFrequencyMoments] as [keyof T, NormalizingCategorical]
+      return [variable, newFrequencyMoments] as [keyof T, MomentsType]
 
-    } else if (isContinuous(variableMoments) && typeof value === 'number') {
+    } else if (inferObject[variable] === 'continuous' && typeof value === 'number') {
       const { min, max, sum } = variableMoments
 
       const newMin = !isNull(min) ? updateMin(value, min) : value
       const newMax = !isNull(max) ? updateMax(value, max) : value
       const updatedSum = sum + value
       const newContinousMoments = {
+        frequencies: {},
         max: newMax,
         min: newMin,
-        sum: updatedSum
+        sum: updatedSum,
       }
 
-      return [variable, newContinousMoments] as [keyof T, NormalizingContinuous]
+      return [variable, newContinousMoments] as [keyof T, MomentsType]
 
-    } else if (isDatetime(variableMoments) && typeof value === 'number') {
+    } else if (inferObject[variable] === 'date' && typeof value === 'number') {
       const { min, max } = variableMoments
       const newMin = !isNull(min) ? updateMin(value, min) : value
       const newMax = !isNull(max) ? updateMax(value, max) : value
 
       const newDatetimeMoments = {
+        frequencies: {},
         max: newMax,
-        min: newMin
+        min: newMin,
+        sum: 0,
       }
-      return [variable, newDatetimeMoments] as [keyof T, NormalizingDatetime]
+      return [variable, newDatetimeMoments] as [keyof T, MomentsType]
     } else {
       return [variable, variableMoments] as [keyof T, MomentsObject<T>[keyof T]]
     }
@@ -108,7 +108,8 @@ export function computeMoments<T>(
 
 
   const inferedObject: MomentsObject<T> = generateDefaultMoments(inferObject)
-  const momentsObject: MomentsObject<T> = rawDataSet.reduce(generateNewMoments, inferedObject)
+  const momentsObject: MomentsObject<T> = rawDataSet.reduce((acc, datum) =>
+    generateNewMoments(acc, datum, inferObject), inferedObject)
 
   return momentsObject
 }
