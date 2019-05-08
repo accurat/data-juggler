@@ -54,9 +54,7 @@ export function dataJuggler<T>(
     throw new Error(MISMATCH_KEY);
   }
 
-  const dataSet = types
-    ? filledDataSet
-    : parseDates(filledDataSet, inferedTypes, parser);
+  const dataSet = parseDates(filledDataSet, inferedTypes, parser);
 
   const moments = computeMoments(dataSet, inferedTypes);
 

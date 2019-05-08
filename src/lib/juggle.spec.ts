@@ -212,19 +212,26 @@ test('Custom Parser', t => {
 })
 
 test('juggle with parser', t => {
-  const { data: correctlyParsedData } = dataJuggler(WITH_DATE_SAMPLE_DATA, {
+
+  const dset = [{timestamp: '2012-02-02'}, {timestamp: '2012-02-03'}]
+
+  const parsed = parseDates(dset, autoInferenceType(dset), { timestamp: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()})
+
+  t.deepEqual(parsed[0].timestamp, dayjs(dset[0].timestamp, 'YYYY-MM-DD').unix())
+
+  const { data: correctlyParsedData } = dataJuggler(dset, {
     parser: {
-      d: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()
-    }
-  })
-  const { data: wronglyParsedData } = dataJuggler(WITH_DATE_SAMPLE_DATA, {
-    parser: {
-      d: (day: string) => dayjs(day, 'MM-DD-YYYY').unix()
+      timestamp: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()
     }
   })
 
-  t.deepEqual(correctlyParsedData[0].d.raw, dayjs(WITH_DATE_SAMPLE_DATA[0].d).unix())
-  t.deepEqual(wronglyParsedData[0].d.raw, null)
+  const { data: wronglyParsedData } = dataJuggler(dset, {
+    parser: {
+      timestamp: (day: string) => dayjs(day, 'MM-DD-YYYY').unix()
+    }
+  })
+  t.deepEqual(correctlyParsedData[0].timestamp.raw, dayjs(dset[0].timestamp, 'YYYY-MM-DD').unix())
+  t.deepEqual(wronglyParsedData[0].timestamp.raw, null)
 })
 
 test('Infer cont column with almost all null', t => {
@@ -275,7 +282,10 @@ test('Frequencies type object', t => {
 
 test('Infer date column, should be date!', t => {
   const d = [{a: '2018-02-02'}, {a: '2018-03-09'}, {a: '2018-03-22'}]
+
+
   const { data, types } = dataJuggler(d)
+
 
   t.deepEqual(types.a, 'date')
   t.deepEqual(data[0].a.raw, 1517526000)
@@ -293,4 +303,31 @@ test('Another date test', t => {
   const { data } = dataJuggler(d)
 
   t.deepEqual(data[0].timestamp.iso, '25-06-2017')
+})
+
+test('Date parser', t => {
+  const d = [
+    {timestamp: "2017-06-25", unix: 1557303452},
+    {timestamp: "2017-06-26", unix: 1557303352},
+    {timestamp: "2017-06-27", unix: 1557303552}
+  ]
+
+  const parsed = parseDates(d, autoInferenceType(d), {})
+
+  t.deepEqual(parsed[0].timestamp, dayjs(d[0].timestamp).unix())
+  t.deepEqual(parsed[0].unix, d[0].unix)
+})
+
+test('Date moments', t => {
+  const d = [
+    {timestamp: "2017-06-25", unix: 1557303452},
+    {timestamp: "2017-06-26", unix: 1557303352},
+    {timestamp: "2017-06-27", unix: 1557303552}
+  ]
+
+  const { moments, types, data } = dataJuggler(d, { types: { unix: 'date', timestamp: 'date' } })
+
+  t.deepEqual(types, { timestamp: 'date', unix: 'date' })
+  t.deepEqual((moments.timestamp as any).max, dayjs('2017-06-27').unix())
+  t.deepEqual(data[0].timestamp.scaled, 0)
 })

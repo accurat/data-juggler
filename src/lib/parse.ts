@@ -1,4 +1,4 @@
-import { get, isNaN, isNull, max as _max, min as _min, toString } from 'lodash';
+import { get, isNaN, isNull, isNumber, max as _max, min as _min, toString } from 'lodash';
 
 import dayjs from 'dayjs';
 
@@ -31,6 +31,7 @@ import {
 
 import { conditionalValueMap, fromPairs, toPairs } from './utils/parseObjects';
 
+
 // tslint:disable:no-this
 // tslint:disable:no-object-literal-type-assertion
 // tslint:disable:no-object-mutation
@@ -42,20 +43,6 @@ type ParsedDatum<T> = {
 };
 
 export const identity = <I>(t: I):I => t
-
-const defaultParseDate = (d: unknown) => {
-  switch(typeof d) {
-    case 'number':
-      return d
-    case 'string':
-      return dayjs(d).unix()
-    case 'object': // null case for fuck sake javascript
-      return 0
-
-    default:
-      return 0
-  }
-}
 
 export function parseDatumFactory<T extends StringKeyedObj>(
   inferObject: InferObject<T>,
@@ -77,7 +64,6 @@ export function parseDatumFactory<T extends StringKeyedObj>(
               : [];
 
           const parse: ParserFunction | typeof identity = get(parser, variable, identity)
-          const parseDate = get(parser, variable, defaultParseDate)
 
           switch (inference) {
             case 'continuous': {
@@ -107,11 +93,11 @@ export function parseDatumFactory<T extends StringKeyedObj>(
             }
             case 'date': {
               const { min, max } = moments[variable] as NormalizingDatetime;
-              const rawValue = parseDate(value)
+              const rawValue = value
               const datum: DatetimeDatum = {
-                raw: !isNaN(rawValue) ? rawValue : null,
+                raw: (!isNaN(rawValue) && isNumber(rawValue)) ? rawValue : null ,
                 get dateTime(): dayjs.Dayjs {
-                  return dayjs.unix(Number(rawValue));
+                  return dayjs.unix(this.raw || 0);
                 },
                 get isValid(): boolean {
                   return valiDate(this.dateTime);
@@ -120,9 +106,9 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                   return this.dateTime.format('DD-MM-YYYY');
                 },
                 get scaled(): number | null {
-                  return !isNull(min) && !isNull(max) && !isNull(this.raw)
+                  return !isNull(min) && !isNull(max) && !isNull(rawValue)
                     ? (Number(rawValue) - min) / (max - min)
-                    : 0;
+                    : null;
                 }
               };
 
@@ -169,23 +155,31 @@ export function parseDatumFactory<T extends StringKeyedObj>(
   };
 }
 
+const convertToUnix = <V extends string | number>(v: V): number => {
+  if (isNumber(v)) {
+    return dayjs(v * 1000).unix()
+  } else {
+    return dayjs(v).unix()
+  }
+}
+
 export function parseDates<T>(
   rawData: Array<GenericDatum<T>>,
   inferTypes: InferObject<T>,
   parser: ParserObject<T>,
 ): Array<{ [P in keyof T]: GenericDatumValue }> {
   const dateKeys = toPairs(inferTypes)
-    .filter(([__, t]) => t === 'date')
-    .map(([v, __]) => v);
+    .filter(([_, t]) => t === 'date')
+    .map(([v, _]) => v);
 
   const isPairDate = <K extends keyof T, S>(key: K, _: unknown): _ is S =>
     dateKeys.includes(key);
 
-  const makeDayjs = <K extends keyof T, V>(key: K, value: V): number =>
+  const makeDayjs = <K extends keyof T, V extends string | number>(key: K, value: V): number =>
     get(
       parser,
       key,
-      (v: V) => !isNaN(dayjs(String(v)).unix()) ? dayjs(String(v)).unix() : null
+      (v: V) => !isNaN(dayjs(v).unix()) ? convertToUnix(v) : null
     )(value)
 
   return rawData.map(datum =>
