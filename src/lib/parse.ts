@@ -70,7 +70,9 @@ export function parseDatumFactory<T extends StringKeyedObj>(
               const { min, max } = moments[variable] as NormalizingContinuous;
               const datum: ContinuousDatum = {
                 raw: parse(value), // FIXME: Better typing, link this to inference
-                get scaled(): number {
+                get scaled(): null | number {
+                  if (isNull(this.raw)) { return null }
+
                   return !isNull(min) && !isNull(max)
                     ? (this.raw - min) / (max - min)
                     : this.raw;
@@ -106,6 +108,7 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                   return this.dateTime.format('DD-MM-YYYY');
                 },
                 get scaled(): number | null {
+
                   return !isNull(min) && !isNull(max) && !isNull(rawValue)
                     ? (Number(rawValue) - min) / (max - min)
                     : null;
