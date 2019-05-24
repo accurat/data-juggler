@@ -70,8 +70,33 @@ t.deepEqual(instance, {
 ```
 
 On top of that you also get some getters for each variable that return the whole column, this could be cut eventually in a censorship attempt by my boss.
-
 Edit: the censorship did happen, this is not there anymore.
+
+## The rescaling functions
+
+It could be annoying having to rescale all your functions because some time having them fitted from min-max to 0-1 is not what you need! We got your back. Another entry in the magical return object of the juggler is `scalers`! Imaging the classical situation below:
+
+```javascript
+const d = [
+  {x: 0},
+  {x: 1},
+  {x: 2}
+]
+```
+
+You can simply apply `dataJuggler`:
+
+```javascript
+const { data, scalers } = dataJuggler(d, { types: infer})
+```
+
+Now if you need to rescale the data you can simply do this:
+
+```javascript
+const newExtent = [0, 4]
+const rescaleV = scalers.x(...newExtent)
+const rescaledX = data.map(datum => rescaleX(datum.v.scaled)) // [0, 0.25, 0.5]
+```
 
 ## The configuration object
 
