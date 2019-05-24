@@ -13,6 +13,7 @@ import {
   InferObject,
   MomentsObject
 } from '../types/types';
+import { scalesFromMoments, ScalingFnsRecords } from './generate-scaling';
 import { doKeysMatch } from './utils/parseObjects';
 import { computeMoments, populateNullData } from './utils/stats';
 
@@ -40,6 +41,7 @@ export function dataJuggler<T>(
   data: JuggledData<T>;
   moments: MomentsObject<T>;
   types: InferObject<T>;
+  scalers: ScalingFnsRecords<T>
 } {
   const { types = {}, formatter, parser = {}} = config;
   const filledDataSet = populateNullData(unparsedDataset);
@@ -62,5 +64,7 @@ export function dataJuggler<T>(
 
   const data = dataSet.map(datum => datumPreprocessor(datum));
 
-  return { data, moments, types: inferedTypes };
+  const scalingFns = scalesFromMoments(moments)
+
+  return { data, moments, types: inferedTypes, scalers: scalingFns };
 }

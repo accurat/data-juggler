@@ -330,3 +330,49 @@ test('Date moments', t => {
   t.deepEqual((moments.timestamp as any).max, dayjs('2017-06-27').unix())
   t.deepEqual(data[0].timestamp.scaled, 0)
 })
+
+test('Null values', t => {
+  const d = [
+    {timestamp: "2017-06-25", v: 12},
+    {timestamp: "2017-06-26", v: null},
+    {timestamp: "2017-06-27", v: 13}
+  ]
+
+  const { data } = dataJuggler(d)
+  t.deepEqual(data[0].v.scaled, 0)
+  t.deepEqual(data[1].v.scaled, null)
+  t.deepEqual(data[2].v.scaled, 1)
+})
+
+test('Scaling fns', t => {
+  const d = [
+    {timestamp: "2017-06-25", v: 12, x: 0},
+    {timestamp: "2017-06-26", v: null, x: 1},
+    {timestamp: "2017-06-27", v: 13, x: 2}
+  ]
+
+  // tslint:disable-next-line:no-object-literal-type-assertion
+  const infer = {
+    timestamp: 'date',
+    v: 'continuous',
+    x: 'continuous'
+  } as const
+
+  const { data, types, scalers } = dataJuggler(d, { types: infer})
+
+  t.deepEqual(types.timestamp, 'date')
+  t.deepEqual(types.v, 'continuous')
+
+  t.deepEqual(data[0].timestamp.scaled, 0)
+  t.deepEqual(data[0].v.scaled, 0)
+  t.deepEqual(data[0].x.scaled, 0)
+
+  const rescaleX = scalers.x(0, 4)
+  t.deepEqual(rescaleX(data[2].x.scaled), 0.5)
+  t.deepEqual(rescaleX(data[0].x.scaled), 0)
+  t.deepEqual(rescaleX(2), 1)
+
+  const rescaleV = scalers.v(0, 13)
+  t.deepEqual(rescaleV(data[2].v.scaled), 1)
+
+})
