@@ -44,6 +44,11 @@ type ParsedDatum<T> = {
 
 export const identity = <I>(t: I):I => t
 
+const logScale = (v: number, l: number, u: number) => {
+  const safeL = l === 0 ? l + 0.0001 : l
+  return Math.log(v / safeL) / Math.log(u / safeL)
+}
+
 export function parseDatumFactory<T extends StringKeyedObj>(
   inferObject: InferObject<T>,
   moments: MomentsObject<T>,
@@ -75,6 +80,13 @@ export function parseDatumFactory<T extends StringKeyedObj>(
 
                   return !isNull(min) && !isNull(max)
                     ? (this.raw - min) / (max - min)
+                    : this.raw;
+                },
+                get logScale(): null | number {
+                  if (isNull(this.raw)) { return null }
+
+                  return !isNull(min) && !isNull(max)
+                    ? logScale(this.raw, min, max)
                     : this.raw;
                 }
               };
@@ -112,6 +124,13 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                   return !isNull(min) && !isNull(max) && !isNull(rawValue)
                     ? (Number(rawValue) - min) / (max - min)
                     : null;
+                },
+                get logScale(): null | number {
+                  if (isNull(this.raw)) { return null }
+
+                  return !isNull(min) && !isNull(max)
+                    ? logScale(this.raw, min, max)
+                    : this.raw;
                 }
               };
 

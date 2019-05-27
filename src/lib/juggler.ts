@@ -33,6 +33,8 @@ export type JuggledData<D> = Array<
 // TODO: Better typing for this.
 /**
  * The core function, it takes in a dataset, a type inference object and an (optional) formatter and returns the juggled data
+ * @param unparsedDataset
+ * @param config
  */
 export function dataJuggler<T>(
   unparsedDataset: Array<GenericDatum<T>>,
@@ -61,7 +63,6 @@ export function dataJuggler<T>(
   const moments = computeMoments(dataSet, inferedTypes);
 
   const datumPreprocessor = parseDatumFactory(inferedTypes, moments, formatter, parser);
-
   const data = dataSet.map(datum => datumPreprocessor(datum));
 
   const scalingFns = scalesFromMoments(moments)

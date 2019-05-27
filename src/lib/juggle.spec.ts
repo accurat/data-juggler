@@ -120,15 +120,16 @@ test('fn', t => {
 
   const firstDatum = juggledData[0];
 
-  t.deepEqual(firstDatum.a, { raw: 3, scaled: 1 });
+  t.deepEqual(firstDatum.a, { raw: 3, scaled: 1, logScale: 1 });
 
   const DATETIME = dayjs.unix(DATES_D[0]);
   const expectedDFirst = {
     dateTime: DATETIME,
     isValid: true,
     iso: DATETIME.format('DD-MM-YYYY'),
+    logScale: 1,
     raw: DATES_D[0],
-    scaled: 1
+    scaled: 1,
   };
 
   t.deepEqual(firstDatum.d, expectedDFirst);
@@ -161,7 +162,7 @@ test('Custom formatter', t => {
 
   const EXPECTED_YEAR = '2019';
 
-  const EXPECTED_A = { raw: 3, scaled: 1, timesthree: '9' };
+  const EXPECTED_A = { raw: 3, scaled: 1, timesthree: '9', logScale: 1 };
 
   const firstInstanceOfA = formattedJuggledData[0].a;
   const firstDateInstanceNormal = formattedJuggledData[0].d;
@@ -358,7 +359,7 @@ test('Scaling fns', t => {
     x: 'continuous'
   } as const
 
-  const { data, types, scalers } = dataJuggler(d, { types: infer})
+  const { data, types, scalers } = dataJuggler(d, { types: infer })
 
   t.deepEqual(types.timestamp, 'date')
   t.deepEqual(types.v, 'continuous')
@@ -375,4 +376,19 @@ test('Scaling fns', t => {
   const rescaleV = scalers.v(0, 13)
   t.deepEqual(rescaleV(data[2].v.scaled), 1)
 
+})
+
+test('Log scale', t => {
+  const d = [
+    {timestamp: "2017-06-25", v: 12, x: 0},
+    {timestamp: "2017-06-26", v: null, x: 1},
+    {timestamp: "2017-06-27", v: 13, x: 2}
+  ]
+
+  const { data } = dataJuggler(d)
+
+  const [fi, sec, th] = data
+  t.deepEqual(fi.x.logScale, -Infinity)
+  t.true(sec.x.logScale !== null && sec.x.logScale > 0.93 &&  sec.x.logScale < 0.95)
+  t.deepEqual(th.x.logScale, 1)
 })

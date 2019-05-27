@@ -47,6 +47,7 @@ interface FormattedProperties {
 export type ContinuousDatum = {
   raw: number;
   scaled: number | null;
+  logScale: number | null;
   [x: string]: number | null | string;
 } & FormattedProperties;
 
@@ -59,6 +60,7 @@ export type DatetimeDatum = {
   iso: string;
   dateTime: Dayjs;
   scaled: number | null;
+  logScale: number | null;
   isValid: boolean;
 } & FormattedProperties;
 
