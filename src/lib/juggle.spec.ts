@@ -1,6 +1,8 @@
 // tslint:disable:no-expression-statement
 // tslint:disable:no-console
 // tslint:disable:ordered-imports
+// tslint:disable:object-literal-sort-keys
+
 import test from 'ava';
 import dayjs from 'dayjs';
 import { isNumber , range, toNumber, toString, isNaN  } from 'lodash';
@@ -391,4 +393,26 @@ test('Log scale', t => {
   t.deepEqual(fi.x.logScale, -Infinity)
   t.true(sec.x.logScale !== null && sec.x.logScale > 0.93 &&  sec.x.logScale < 0.95)
   t.deepEqual(th.x.logScale, 1)
+})
+
+test('Formatter with max min parameters', t => {
+  const aDataset = [{'a': 2}, {'a': 3}, {'a': 4}]
+
+  const { data } = dataJuggler(aDataset, {
+    formatter: {
+      a: [
+        {
+          name: 'double',
+          formatter: (datum) => `${toNumber(datum.raw) * 2}`
+        },
+        {
+          name: 'boundaries',
+          formatter: (datum, moments) => `${moments.min} < ${datum.raw} < ${moments.max}`
+        }
+      ]
+    }
+  })
+
+  t.deepEqual(data[0].a.double, '4')
+  t.deepEqual(data[1].a.boundaries, '2 < 3 < 4')
 })

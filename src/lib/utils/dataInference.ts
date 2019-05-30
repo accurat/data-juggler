@@ -28,15 +28,12 @@ export function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
 
 export type GenericFormattingFunction = (
   datum: CategoricalDatum | ContinuousDatum | DatetimeDatum,
-  stats?: {
-    min?: number;
-    max?: number;
+  stats: {
+    min?: number | null;
+    max?: number | null;
     frequencies?: { [cat: string]: number };
     sum?: number;
   },
-  row?: {
-    [variable: string]: CategoricalDatum | ContinuousDatum | DatetimeDatum;
-  }
 ) => string;
 
 export type FormatterObject<T extends StringKeyedObj> = {

@@ -72,7 +72,7 @@ export function parseDatumFactory<T extends StringKeyedObj>(
 
           switch (inference) {
             case 'continuous': {
-              const { min, max } = moments[variable] as NormalizingContinuous;
+              const { min, max, sum } = moments[variable] as NormalizingContinuous;
               const datum: ContinuousDatum = {
                 raw: parse(value), // FIXME: Better typing, link this to inference
                 get scaled(): null | number {
@@ -97,7 +97,12 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                     configurable: true,
                     enumerable: true,
                     get(): string {
-                      return formatter(this);
+                      return formatter(
+                        datum, {
+                          max,
+                          min,
+                          sum,
+                      });
                     }
                   });
                 });
@@ -140,7 +145,11 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                     configurable: true,
                     enumerable: true,
                     get(): string {
-                      return formatter(this);
+                      return formatter(
+                        datum, {
+                          max,
+                          min,
+                      });
                     }
                   });
                 });
@@ -162,7 +171,7 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                     configurable: true,
                     enumerable: true,
                     get(): string {
-                      return formatter(this.raw, { frequencies });
+                      return formatter(datum, { frequencies });
                     }
                   });
                 });
