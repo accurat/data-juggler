@@ -12,14 +12,14 @@ import { fromPairs } from './parseObjects';
 import { getAllKeys } from './stats';
 
 // tslint:disable-next-line:no-submodule-imports
-import CustomParseFormat from 'dayjs/plugin/customParseFormat' // load on demand
+import CustomParseFormat from 'dayjs/plugin/customParseFormat'; // load on demand
 // tslint:disable-next-line:no-expression-statement
-dayjs.extend(CustomParseFormat) // use plugin
+dayjs.extend(CustomParseFormat); // use plugin
 
 export type GenericDatumValue = number | string | boolean | null;
 
 export type GenericDatum<T extends StringKeyedObj> = {
-  [key in keyof T]: GenericDatumValue
+  [key in keyof T]: GenericDatumValue;
 };
 
 export function valiDate(dateObj: dayjs.Dayjs | unknown): boolean {
@@ -33,35 +33,34 @@ export type GenericFormattingFunction = (
     max?: number | null;
     frequencies?: { [cat: string]: number };
     sum?: number;
-  },
+  }
 ) => string;
 
 export type FormatterObject<T extends StringKeyedObj> = {
   [variable in keyof T]?: Array<{
     name: string;
     formatter: GenericFormattingFunction;
-  }>
+  }>;
 };
 
-export type ParserFunction = (raw: any) => any
+export type ParserFunction = (raw: any) => any;
 
 export type ParserObject<T extends StringKeyedObj> = {
-  [variable in keyof T]?: ParserFunction
+  [variable in keyof T]?: ParserFunction;
 };
 
-function inferIfStringIsNumber (value: unknown): boolean {
-  return typeof value === 'string' ? !isNaN(Number(value)) : false
+function inferIfStringIsNumber(value: unknown): boolean {
+  return typeof value === 'string' ? !isNaN(Number(value)) : false;
 }
 
 function inferIsNumber(value: unknown): boolean {
-  return isFinite(value) || inferIfStringIsNumber(value)
+  return isFinite(value) || inferIfStringIsNumber(value);
 }
 
 export function detectValue(
   value: string | number | boolean | dayjs.Dayjs | Date | null,
   p: ParserFunction
 ): DatumType | 'unknown' {
-
   if (!value || isNull(value) || typeof value === 'boolean') {
     return 'unknown';
   }
@@ -76,25 +75,28 @@ export function detectValue(
 }
 
 interface Frequencies {
-  categorical: number
-  continuous: number
-  date: number
-  unknown: number
+  categorical: number;
+  continuous: number;
+  date: number;
+  unknown: number;
 }
 
 export function selectTypeFromFrequencies(fr: Frequencies): DatumType {
   // To be date, no unknown can be present, to be continuous the same condition does not apply
   switch (true) {
-    case fr.unknown === 0 && fr.categorical === 0 && fr.continuous === 0 && fr.date > 0:
-      return 'date'
+    case fr.unknown === 0 &&
+      fr.categorical === 0 &&
+      fr.continuous === 0 &&
+      fr.date > 0:
+      return 'date';
     case fr.categorical === 0 && fr.date === 0 && fr.continuous > 0:
-      return 'continuous'
+      return 'continuous';
     default:
-      return 'categorical'
+      return 'categorical';
   }
 }
 
-export function detectArrayType<T>(
+export function detectArrayType<T extends StringKeyedObj>(
   column: Array<GenericDatum<T>[keyof T]>,
   p: ParserFunction
 ): DatumType {
@@ -118,20 +120,20 @@ export function detectArrayType<T>(
     }
   );
 
-  return selectTypeFromFrequencies(columnProbs)
+  return selectTypeFromFrequencies(columnProbs);
 }
 
-export function autoInferenceType<T>(
+export function autoInferenceType<T extends StringKeyedObj>(
   data: Array<GenericDatum<T>>,
   existingObj: InferObject<T> | {} = {},
   parser: ParserObject<T> = {}
 ): InferObject<T> {
-  const incomingKeys = [...getAllKeys(data)]
-  const passedKeys = new Set(keys(existingObj))
+  const incomingKeys = [...getAllKeys(data)];
+  const passedKeys = new Set(keys(existingObj));
   const keyType: Array<[keyof T, DatumType]> = incomingKeys
-  .filter(k => !passedKeys.has(k))
-  .map(key => {
-      const p = get(parser, key, (v: unknown) => v)
+    .filter(k => !passedKeys.has(k))
+    .map(key => {
+      const p = get(parser, key, (v: unknown) => v);
       const variableData = data.map(d => d[key]);
       return [key, detectArrayType(variableData, p)];
     });

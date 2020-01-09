@@ -38,7 +38,7 @@ export interface StringKeyedObj {
 }
 
 export type InferObject<T extends StringKeyedObj> = {
-  [V in keyof T]: DatumType
+  [V in keyof T]: DatumType;
 };
 interface FormattedProperties {
   [customForms: string]: string | number | null | Dayjs | boolean;
@@ -65,11 +65,11 @@ export type DatetimeDatum = {
 } & FormattedProperties;
 
 export type CollapsedDatum<T extends StringKeyedObj> = {
-  [variable in keyof T]: ContinuousDatum | CategoricalDatum | DatetimeDatum
+  [variable in keyof T]: ContinuousDatum | CategoricalDatum | DatetimeDatum;
 };
 
 export type MomentsObject<T extends StringKeyedObj> = {
-  [variable in keyof T]: MomentsType
+  [variable in keyof T]: MomentsType;
 };
 
 export interface DatetimeParse {

@@ -11,7 +11,8 @@ import {
   ContinuousDatum,
   DatetimeDatum,
   InferObject,
-  MomentsObject
+  MomentsObject,
+  StringKeyedObj
 } from '../types/types';
 import { scalesFromMoments, ScalingFnsRecords } from './generate-scaling';
 import { doKeysMatch } from './utils/parseObjects';
@@ -20,10 +21,10 @@ import { computeMoments, populateNullData } from './utils/stats';
 const MISMATCH_KEY =
   'It seems like the data keys and the types object you passed do not match!';
 
-interface JuggleConfig<T> {
-  types?: InferObject<T>
-  formatter?: FormatterObject<T>
-  parser?: ParserObject<T>
+interface JuggleConfig<T extends StringKeyedObj> {
+  types?: InferObject<T>;
+  formatter?: FormatterObject<T>;
+  parser?: ParserObject<T>;
 }
 
 export type JuggledData<D> = Array<
@@ -36,16 +37,16 @@ export type JuggledData<D> = Array<
  * @param unparsedDataset
  * @param config
  */
-export function dataJuggler<T>(
+export function dataJuggler<T extends StringKeyedObj>(
   unparsedDataset: Array<GenericDatum<T>>,
   config: JuggleConfig<T> = {}
 ): {
   data: JuggledData<T>;
   moments: MomentsObject<T>;
   types: InferObject<T>;
-  scalers: ScalingFnsRecords<T>
+  scalers: ScalingFnsRecords<T>;
 } {
-  const { types = {}, formatter, parser = {}} = config;
+  const { types = {}, formatter, parser = {} } = config;
   const filledDataSet = populateNullData(unparsedDataset);
 
   const inferedTypes = autoInferenceType(
@@ -62,10 +63,15 @@ export function dataJuggler<T>(
 
   const moments = computeMoments(dataSet, inferedTypes);
 
-  const datumPreprocessor = parseDatumFactory(inferedTypes, moments, formatter, parser);
+  const datumPreprocessor = parseDatumFactory(
+    inferedTypes,
+    moments,
+    formatter,
+    parser
+  );
   const data = dataSet.map(datum => datumPreprocessor(datum));
 
-  const scalingFns = scalesFromMoments(moments)
+  const scalingFns = scalesFromMoments(moments);
 
   return { data, moments, types: inferedTypes, scalers: scalingFns };
 }

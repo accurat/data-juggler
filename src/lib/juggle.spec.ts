@@ -5,11 +5,16 @@
 
 import test from 'ava';
 import dayjs from 'dayjs';
-import { isNumber , range, toNumber, toString, isNaN  } from 'lodash';
+import { isNumber, range, toNumber, toString, isNaN } from 'lodash';
 import fetch from 'node-fetch';
 import { dataJuggler } from '..';
 import { InferObject, MomentsObject } from '../types/types';
-import { autoInferenceType, FormatterObject, detectValue, selectTypeFromFrequencies } from './utils/dataInference';
+import {
+  autoInferenceType,
+  FormatterObject,
+  detectValue,
+  selectTypeFromFrequencies
+} from './utils/dataInference';
 // ParseObjectType
 import {
   computeMoments,
@@ -20,10 +25,10 @@ import {
 import { parseDates } from './parse';
 
 // tslint:disable-next-line:no-submodule-imports
-import CustomParseFormat from 'dayjs/plugin/customParseFormat' // load on demand
+import CustomParseFormat from 'dayjs/plugin/customParseFormat'; // load on demand
 import { conditionalValueMap } from './utils/parseObjects';
 // tslint:disable-next-line:no-expression-statement
-dayjs.extend(CustomParseFormat) // use plugin
+dayjs.extend(CustomParseFormat); // use plugin
 
 const DEFAULT_DATE = 1552563578;
 // const URL =
@@ -90,7 +95,8 @@ test('momets', t => {
     a: { min: null, max: null, sum: 0, frequencies: {} },
     b: { min: null, max: null, sum: 0, frequencies: {} },
     c: { min: null, max: null, sum: 0, frequencies: {} },
-    d: { min: null, max: null, sum: 0, frequencies: {} },  };
+    d: { min: null, max: null, sum: 0, frequencies: {} }
+  };
 
   t.deepEqual(EXPECTED_DEFAULT_MOMENTS, defaultMoments);
 });
@@ -107,7 +113,12 @@ test('fn', t => {
   const moments = computeMoments(filledSample, INSTANCE_TYPES);
   const EXPECTED_MOMENTS: MomentsObject<Datum> = {
     a: { min: 1, max: 3, sum: 7.5, frequencies: {} },
-    b: { frequencies: { mamma: 1, papà: 2, cugino: 1 }, min: null, max: null, sum: 0 },
+    b: {
+      frequencies: { mamma: 1, papà: 2, cugino: 1 },
+      min: null,
+      max: null,
+      sum: 0
+    },
     c: { min: 2, max: 4, sum: 9, frequencies: {} },
     d: { min: DATES_D[3], max: DATES_D[0], frequencies: {}, sum: 0 }
   };
@@ -131,7 +142,7 @@ test('fn', t => {
     iso: DATETIME.format('DD-MM-YYYY'),
     logScale: 1,
     raw: DATES_D[0],
-    scaled: 1,
+    scaled: 1
   };
 
   t.deepEqual(firstDatum.d, expectedDFirst);
@@ -175,7 +186,7 @@ test('Custom formatter', t => {
 
 test('parseDates', t => {
   const dates = [{ d: '2012-12-22' }, { d: '2013-12-22' }];
-  t.notThrows(() => parseDates(dates, autoInferenceType(dates, {}), {} ));
+  t.notThrows(() => parseDates(dates, autoInferenceType(dates, {}), {}));
   const inferObj = autoInferenceType(dates, {});
   const parsedDates = parseDates(dates, inferObj, {});
 
@@ -184,91 +195,100 @@ test('parseDates', t => {
 
 test('Conditional Map', t => {
   const c = conditionalValueMap(
-    { 'd': 3, 'b': true},
-    (_, v):  v is number => isNumber(v),
+    { d: 3, b: true },
+    (_, v): v is number => isNumber(v),
     (_, v) => v * 2
-  )
+  );
 
-  const exp = {'d': 6, 'b': true}
-  t.deepEqual(c, exp)
-})
+  const exp = { d: 6, b: true };
+  t.deepEqual(c, exp);
+});
 
 test('Custom Parser', t => {
-  const types = autoInferenceType(WITH_DATE_SAMPLE_DATA, {})
+  const types = autoInferenceType(WITH_DATE_SAMPLE_DATA, {});
 
   const wrongParser = {
     d: (day: string) => dayjs(day, 'DD-MM-YYYY').unix()
-  }
-  const parsedDates = parseDates(WITH_DATE_SAMPLE_DATA, types, wrongParser)
+  };
+  const parsedDates = parseDates(WITH_DATE_SAMPLE_DATA, types, wrongParser);
 
   const correctParser = {
     d: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()
-  }
+  };
 
-  const correctParseDates = parseDates(WITH_DATE_SAMPLE_DATA, types, correctParser)
+  const correctParseDates = parseDates(
+    WITH_DATE_SAMPLE_DATA,
+    types,
+    correctParser
+  );
 
-  const incomingWrong = parsedDates[0].d
-  const incomingCorrect = correctParseDates[0].d
-  t.true(isNaN(incomingWrong))
-  t.deepEqual(incomingCorrect, dayjs('2018-02-20').unix())
-})
+  const incomingWrong = parsedDates[0].d;
+  const incomingCorrect = correctParseDates[0].d;
+  t.true(isNaN(incomingWrong));
+  t.deepEqual(incomingCorrect, dayjs('2018-02-20').unix());
+});
 
 test('juggle with parser', t => {
+  const dset = [{ timestamp: '2012-02-02' }, { timestamp: '2012-02-03' }];
 
-  const dset = [{timestamp: '2012-02-02'}, {timestamp: '2012-02-03'}]
+  const parsed = parseDates(dset, autoInferenceType(dset), {
+    timestamp: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()
+  });
 
-  const parsed = parseDates(dset, autoInferenceType(dset), { timestamp: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()})
-
-  t.deepEqual(parsed[0].timestamp, dayjs(dset[0].timestamp, 'YYYY-MM-DD').unix())
+  t.deepEqual(
+    parsed[0].timestamp,
+    dayjs(dset[0].timestamp, 'YYYY-MM-DD').unix()
+  );
 
   const { data: correctlyParsedData } = dataJuggler(dset, {
     parser: {
       timestamp: (day: string) => dayjs(day, 'YYYY-MM-DD').unix()
     }
-  })
+  });
 
   const { data: wronglyParsedData } = dataJuggler(dset, {
     parser: {
       timestamp: (day: string) => dayjs(day, 'MM-DD-YYYY').unix()
     }
-  })
-  t.deepEqual(correctlyParsedData[0].timestamp.raw, dayjs(dset[0].timestamp, 'YYYY-MM-DD').unix())
-  t.deepEqual(wronglyParsedData[0].timestamp.raw, null)
-})
+  });
+  t.deepEqual(
+    correctlyParsedData[0].timestamp.raw,
+    dayjs(dset[0].timestamp, 'YYYY-MM-DD').unix()
+  );
+  t.deepEqual(wronglyParsedData[0].timestamp.raw, null);
+});
 
 test('Infer cont column with almost all null', t => {
-  const d = [{a: null}, {a: null}, {a: 3}]
-  const { types } = dataJuggler(d)
-  t.deepEqual(types.a, 'continuous')
-})
+  const d = [{ a: null }, { a: null }, { a: 3 }];
+  const { types } = dataJuggler(d);
+  t.deepEqual(types.a, 'continuous');
+});
 
 test('Infer categorical column with almost all null', t => {
-  const d = [{a: null}, {a: null}, {a: 'ciao'}]
-  const { types } = dataJuggler(d)
-  t.deepEqual(types.a, 'categorical')
-})
+  const d = [{ a: null }, { a: null }, { a: 'ciao' }];
+  const { types } = dataJuggler(d);
+  t.deepEqual(types.a, 'categorical');
+});
 
 test('Infer date column with almost all null, should be not date!', t => {
-  const d = [{a: null}, {a: null}, {a: '12-02-2018'}]
-  const { types } = dataJuggler(d)
+  const d = [{ a: null }, { a: null }, { a: '12-02-2018' }];
+  const { types } = dataJuggler(d);
 
-  t.notDeepEqual(types.a, 'date')
-})
-
+  t.notDeepEqual(types.a, 'date');
+});
 
 // DATES
 
 test('Detect single date', t => {
-  const date = '17-02-2019'
-  const parserFn = (p: string) => dayjs(p, 'DD-MM-YYYY').unix()
-  const wrong = detectValue(date, (i) => i)
-  const right = detectValue(date, parserFn)
+  const date = '17-02-2019';
+  const parserFn = (p: string) => dayjs(p, 'DD-MM-YYYY').unix();
+  const wrong = detectValue(date, i => i);
+  const right = detectValue(date, parserFn);
 
-  t.true(dayjs(parserFn(date) * 1000).isValid())
-  t.notDeepEqual(wrong, 'date')
-  t.deepEqual(right, 'date')
-
-})
+  t.true(dayjs(parserFn(date) * 1000).isValid());
+  t.notDeepEqual(wrong, 'date');
+  t.deepEqual(right, 'date');
+});
 
 test('Frequencies type object', t => {
   const obj = {
@@ -276,143 +296,151 @@ test('Frequencies type object', t => {
     continuous: 0,
     date: 3,
     unknown: 0
-  }
+  };
 
-  const dFr = selectTypeFromFrequencies(obj)
-  t.deepEqual(dFr, 'date')
-})
+  const dFr = selectTypeFromFrequencies(obj);
+  t.deepEqual(dFr, 'date');
+});
 
 test('Infer date column, should be date!', t => {
-  const d = [{a: '2018-02-02'}, {a: '2018-03-09'}, {a: '2018-03-22'}]
+  const d = [{ a: '2018-02-02' }, { a: '2018-03-09' }, { a: '2018-03-22' }];
 
+  const { data, types } = dataJuggler(d);
 
-  const { data, types } = dataJuggler(d)
-
-
-  t.deepEqual(types.a, 'date')
-  t.deepEqual(data[0].a.raw, 1517526000)
-})
+  t.deepEqual(types.a, 'date');
+  t.deepEqual(data[0].a.raw, 1517526000);
+});
 
 test('Infer date column, with custom parser, should be date!', t => {
-  const d = [{a: '13/02/2018'}, {a: '15/02/2018'}, {a: '12/02/2018'}]
-  const { types } = dataJuggler(d, { parser: { a: (x: string) => dayjs(x, 'DD/MM/YYYY').unix() } })
+  const d = [{ a: '13/02/2018' }, { a: '15/02/2018' }, { a: '12/02/2018' }];
+  const { types } = dataJuggler(d, {
+    parser: { a: (x: string) => dayjs(x, 'DD/MM/YYYY').unix() }
+  });
 
-  t.deepEqual(types.a, 'date')
-})
+  t.deepEqual(types.a, 'date');
+});
 
 test('Another date test', t => {
-  const d = [{timestamp: "2017-06-25", value: 60.55}, {timestamp: "2017-06-26", value: 39.12}, {timestamp: "2017-06-27", value: 6.06}]
-  const { data } = dataJuggler(d)
+  const d = [
+    { timestamp: '2017-06-25', value: 60.55 },
+    { timestamp: '2017-06-26', value: 39.12 },
+    { timestamp: '2017-06-27', value: 6.06 }
+  ];
+  const { data } = dataJuggler(d);
 
-  t.deepEqual(data[0].timestamp.iso, '25-06-2017')
-})
+  t.deepEqual(data[0].timestamp.iso, '25-06-2017');
+});
 
 test('Date parser', t => {
   const d = [
-    {timestamp: "2017-06-25", unix: 1557303452},
-    {timestamp: "2017-06-26", unix: 1557303352},
-    {timestamp: "2017-06-27", unix: 1557303552}
-  ]
+    { timestamp: '2017-06-25', unix: 1557303452 },
+    { timestamp: '2017-06-26', unix: 1557303352 },
+    { timestamp: '2017-06-27', unix: 1557303552 }
+  ];
 
-  const parsed = parseDates(d, autoInferenceType(d), {})
+  const parsed = parseDates(d, autoInferenceType(d), {});
 
-  t.deepEqual(parsed[0].timestamp, dayjs(d[0].timestamp).unix())
-  t.deepEqual(parsed[0].unix, d[0].unix)
-})
+  t.deepEqual(parsed[0].timestamp, dayjs(d[0].timestamp).unix());
+  t.deepEqual(parsed[0].unix, d[0].unix);
+});
 
 test('Date moments', t => {
   const d = [
-    {timestamp: "2017-06-25", unix: 1557303452},
-    {timestamp: "2017-06-26", unix: 1557303352},
-    {timestamp: "2017-06-27", unix: 1557303552}
-  ]
+    { timestamp: '2017-06-25', unix: 1557303452 },
+    { timestamp: '2017-06-26', unix: 1557303352 },
+    { timestamp: '2017-06-27', unix: 1557303552 }
+  ];
 
-  const { moments, types, data } = dataJuggler(d, { types: { unix: 'date', timestamp: 'date' } })
+  const { moments, types, data } = dataJuggler(d, {
+    types: { unix: 'date', timestamp: 'date' }
+  });
 
-  t.deepEqual(types, { timestamp: 'date', unix: 'date' })
-  t.deepEqual((moments.timestamp as any).max, dayjs('2017-06-27').unix())
-  t.deepEqual(data[0].timestamp.scaled, 0)
-})
+  t.deepEqual(types, { timestamp: 'date', unix: 'date' });
+  t.deepEqual((moments.timestamp as any).max, dayjs('2017-06-27').unix());
+  t.deepEqual(data[0].timestamp.scaled, 0);
+});
 
 test('Null values', t => {
   const d = [
-    {timestamp: "2017-06-25", v: 12},
-    {timestamp: "2017-06-26", v: null},
-    {timestamp: "2017-06-27", v: 13}
-  ]
+    { timestamp: '2017-06-25', v: 12 },
+    { timestamp: '2017-06-26', v: null },
+    { timestamp: '2017-06-27', v: 13 }
+  ];
 
-  const { data } = dataJuggler(d)
-  t.deepEqual(data[0].v.scaled, 0)
-  t.deepEqual(data[1].v.scaled, null)
-  t.deepEqual(data[2].v.scaled, 1)
-})
+  const { data } = dataJuggler(d);
+  t.deepEqual(data[0].v.scaled, 0);
+  t.deepEqual(data[1].v.scaled, null);
+  t.deepEqual(data[2].v.scaled, 1);
+});
 
 test('Scaling fns', t => {
   const d = [
-    {timestamp: "2017-06-25", v: 12, x: 0},
-    {timestamp: "2017-06-26", v: null, x: 1},
-    {timestamp: "2017-06-27", v: 13, x: 2}
-  ]
+    { timestamp: '2017-06-25', v: 12, x: 0 },
+    { timestamp: '2017-06-26', v: null, x: 1 },
+    { timestamp: '2017-06-27', v: 13, x: 2 }
+  ];
 
   // tslint:disable-next-line:no-object-literal-type-assertion
   const infer = {
     timestamp: 'date',
     v: 'continuous',
     x: 'continuous'
-  } as const
+  } as const;
 
-  const { data, types, scalers } = dataJuggler(d, { types: infer })
+  const { data, types, scalers } = dataJuggler(d, { types: infer });
 
-  t.deepEqual(types.timestamp, 'date')
-  t.deepEqual(types.v, 'continuous')
+  t.deepEqual(types.timestamp, 'date');
+  t.deepEqual(types.v, 'continuous');
 
-  t.deepEqual(data[0].timestamp.scaled, 0)
-  t.deepEqual(data[0].v.scaled, 0)
-  t.deepEqual(data[0].x.scaled, 0)
+  t.deepEqual(data[0].timestamp.scaled, 0);
+  t.deepEqual(data[0].v.scaled, 0);
+  t.deepEqual(data[0].x.scaled, 0);
 
-  const rescaleX = scalers.x(0, 4)
-  t.deepEqual(rescaleX(data[2].x.scaled), 0.5)
-  t.deepEqual(rescaleX(data[0].x.scaled), 0)
-  t.deepEqual(rescaleX(2), 1)
+  const rescaleX = scalers.x(0, 4);
+  t.deepEqual(rescaleX(data[2].x.scaled), 0.5);
+  t.deepEqual(rescaleX(data[0].x.scaled), 0);
+  t.deepEqual(rescaleX(2), 1);
 
-  const rescaleV = scalers.v(0, 13)
-  t.deepEqual(rescaleV(data[2].v.scaled), 1)
-
-})
+  const rescaleV = scalers.v(0, 13);
+  t.deepEqual(rescaleV(data[2].v.scaled), 1);
+});
 
 test('Log scale', t => {
   const d = [
-    {timestamp: "2017-06-25", v: 12, x: 0},
-    {timestamp: "2017-06-26", v: null, x: 1},
-    {timestamp: "2017-06-27", v: 13, x: 2}
-  ]
+    { timestamp: '2017-06-25', v: 12, x: 0 },
+    { timestamp: '2017-06-26', v: null, x: 1 },
+    { timestamp: '2017-06-27', v: 13, x: 2 }
+  ];
 
-  const { data } = dataJuggler(d)
+  const { data } = dataJuggler(d);
 
-  const [fi, sec, th] = data
-  t.deepEqual(fi.x.logScale, -Infinity)
-  t.true(sec.x.logScale !== null && sec.x.logScale > 0.93 &&  sec.x.logScale < 0.95)
-  t.deepEqual(th.x.logScale, 1)
-})
+  const [fi, sec, th] = data;
+  t.deepEqual(fi.x.logScale, -Infinity);
+  t.true(
+    sec.x.logScale !== null && sec.x.logScale > 0.93 && sec.x.logScale < 0.95
+  );
+  t.deepEqual(th.x.logScale, 1);
+});
 
 test('Formatter with max min parameters', t => {
-  const aDataset = [{'a': 2}, {'a': 3}, {'a': 4}]
+  const aDataset = [{ a: 2 }, { a: 3 }, { a: 4 }];
 
   const { data } = dataJuggler(aDataset, {
     formatter: {
       a: [
         {
           name: 'double',
-          formatter: (datum) => `${toNumber(datum.raw) * 2}`
+          formatter: datum => `${toNumber(datum.raw) * 2}`
         },
         {
           name: 'boundaries',
-          formatter: (datum, moments) => `${moments.min} < ${datum.raw} < ${moments.max}`
+          formatter: (datum, moments) =>
+            `${moments.min} < ${datum.raw} < ${moments.max}`
         }
       ]
     }
-  })
+  });
 
-  t.deepEqual(data[0].a.double, '4')
-  t.deepEqual(data[1].a.boundaries, '2 < 3 < 4')
-})
+  t.deepEqual(data[0].a.double, '4');
+  t.deepEqual(data[1].a.boundaries, '2 < 3 < 4');
+});
