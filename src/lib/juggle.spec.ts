@@ -491,7 +491,7 @@ test('Formatter with max min parameters', t => {
 
 // -------
 
-test('Test frequencies for mixed data (string, number, boolean)', t => {
+test('Test frequencies for mixed data (string, number, boolean, date)', t => {
   const dataset = [
     { mix: 'cat' },
     { mix: 'cat' },
@@ -536,3 +536,16 @@ test('Test frequencies for bool data', t => {
 })
 
 // -------
+
+test('Test type cat-1', t => {
+  const dataset = [
+    { cat: "cat-1", date: "2017-06-25" },
+  ];
+
+  const { moments, types } = dataJuggler(dataset);
+
+  // type test
+  t.deepEqual(types.cat, 'categorical')
+  t.deepEqual(types.date, 'date')
+
+})
