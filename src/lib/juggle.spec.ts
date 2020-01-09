@@ -499,6 +499,7 @@ test('Test frequencies for mixed data (string, number, boolean)', t => {
     { mix: 'llama5' },
     { mix: '3mouse' },
     { mix: '1 bear' },
+    { mix: '2017-06-25' },
     { mix: 5 },
     { mix: 10 },
     { mix: false },
@@ -510,7 +511,7 @@ test('Test frequencies for mixed data (string, number, boolean)', t => {
   t.deepEqual(types.mix, 'categorical')
 
   // frequencies test
-  t.deepEqual((moments.mix).frequencies, { "cat": 2, "monkey": 1, "llama5": 1, "3mouse": 1, "1 bear": 1, "5": 1, "10": 1, "false": 1 })
+  t.deepEqual((moments.mix).frequencies, { "cat": 2, "monkey": 1, "llama5": 1, "3mouse": 1, "1 bear": 1, "2017-06-25": 1, "5": 1, "10": 1, "false": 1 })
 
 })
 
