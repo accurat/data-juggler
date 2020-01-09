@@ -444,3 +444,28 @@ test('Formatter with max min parameters', t => {
   t.deepEqual(data[0].a.double, '4');
   t.deepEqual(data[1].a.boundaries, '2 < 3 < 4');
 });
+
+// -------
+
+test('Test frequencies for mixed data (string, number, boolean)', t => {
+  const dataset = [
+    { mix: 'cat' },
+    { mix: 'cat' },
+    { mix: 'monkey' },
+    { mix: 'llama5' },
+    { mix: '3mouse' },
+    { mix: '1 bear' },
+    { mix: 5 },
+    { mix: 10 },
+    { mix: false },
+  ];
+
+  const { moments, types } = dataJuggler(dataset); 
+
+  // type test
+  t.deepEqual(types.mix, 'categorical')
+
+  // frequencies test
+  t.deepEqual((moments.mix).frequencies, { "cat": 2, "monkey": 1, "llama5": 1, "3mouse": 1, "1 bear": 1, "5": 1, "10": 1, "false": 1 })
+
+})
