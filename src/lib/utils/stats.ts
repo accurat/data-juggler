@@ -75,12 +75,13 @@ export const generateNewMoments = <T extends StringKeyedObj>(
 
       if (
         inferObject[variable] === 'categorical' &&
-        typeof value === 'string'
+        (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
       ) {
+        const stringValue = value.toString()
         const { frequencies } = variableMoments;
         const newFrequencies = {
           ...frequencies,
-          [value]: frequencies[value] ? frequencies[value] + 1 : 1
+          [stringValue]: frequencies[stringValue] ? frequencies[stringValue] + 1 : 1
         };
         const newFrequencyMoments = {
           frequencies: newFrequencies,
@@ -90,7 +91,8 @@ export const generateNewMoments = <T extends StringKeyedObj>(
         };
 
         return [variable, newFrequencyMoments] as [keyof T, MomentsType];
-      } else if (
+      }
+      else if (
         inferObject[variable] === 'continuous' &&
         typeof value === 'number'
       ) {
@@ -137,6 +139,7 @@ export function computeMoments<T extends StringKeyedObj>(
   inferObject: InferObject<T>
 ): MomentsObject<T> {
   const inferedObject: MomentsObject<T> = generateDefaultMoments(inferObject);
+  
   const momentsObject: MomentsObject<T> = rawDataSet.reduce(
     (acc, datum) => generateNewMoments(acc, datum, inferObject),
     inferedObject
