@@ -505,7 +505,7 @@ test('Test frequencies for mixed data (string, number, boolean, date)', t => {
     { mix: false },
   ];
 
-  const { moments, types } = dataJuggler(dataset); 
+  const { moments, types } = dataJuggler(dataset);
 
   // type test
   t.deepEqual(types.mix, 'categorical')
@@ -525,7 +525,7 @@ test('Test frequencies for bool data', t => {
     { bool: true },
   ];
 
-  const { moments, types } = dataJuggler(dataset); 
+  const { moments, types } = dataJuggler(dataset);
 
   // type test
   t.deepEqual(types.bool, 'categorical')
@@ -537,12 +537,12 @@ test('Test frequencies for bool data', t => {
 
 // -------
 
-test('Test type cat-1', t => {
+test('Test type cat-1 is not a date', t => {
   const dataset = [
     { cat: "cat-1", date: "2017-06-25" },
   ];
 
-  const { moments, types } = dataJuggler(dataset);
+  const { types } = dataJuggler(dataset);
 
   // type test
   t.deepEqual(types.cat, 'categorical')

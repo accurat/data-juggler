@@ -67,11 +67,23 @@ export function detectValue(
 
   if (inferIsNumber(value)) {
     return 'continuous';
-  } else if (dayjs(p(value) * 1000).isValid() || dayjs(value).isValid()) {
+  } else if (typeof value === 'string' && isDateValid(value, p)) {
     return 'date';
   } else {
     return 'categorical';
   }
+}
+
+export function isDateValid(
+  value: string | number,
+  parser: ParserFunction
+): boolean {
+  // this will match yyyy-mm-dd and also yyyy-m-d
+  const regDate = /^([1-9][0-9]{3})\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/
+  // TODO: add other regex to accept also other date formats
+
+  const isTimestampValid = dayjs(parser(value) * 1000).isValid()
+  return isTimestampValid || regDate.test(value.toString())
 }
 
 interface Frequencies {
