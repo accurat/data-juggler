@@ -22,7 +22,7 @@ import {
   ParserFunction,
   ParserObject,
   valiDate
-} from './utils/dataInference';
+} from './dataInference';
 
 import {
   CategoricalDatum,
@@ -37,7 +37,7 @@ import {
   StringKeyedObj
 } from '../types/types';
 
-import { conditionalValueMap, fromPairs, toPairs } from './utils/parseObjects';
+import { conditionalValueMap, fromPairs, toPairs } from './parseObjects';
 
 // tslint:disable:no-this
 // tslint:disable:no-object-literal-type-assertion

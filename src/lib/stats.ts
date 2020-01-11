@@ -3,7 +3,7 @@ import {
   MomentsObject,
   MomentsType,
   StringKeyedObj
-} from '../../types/types';
+} from '../types/types';
 import { GenericDatum, GenericDatumValue } from './dataInference';
 
 import { isNull } from 'lodash';

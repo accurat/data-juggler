@@ -7,7 +7,7 @@ import {
   DatumType,
   InferObject,
   StringKeyedObj
-} from '../../types/types';
+} from '../types/types';
 import { fromPairs } from './parseObjects';
 import { getAllKeys } from './stats';
 

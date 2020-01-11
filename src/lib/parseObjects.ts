@@ -1,4 +1,4 @@
-import { InferObject, ValueOf, StringKeyedObj } from '../../types/types';
+import { InferObject, ValueOf, StringKeyedObj } from '../types/types';
 import { GenericDatum } from './dataInference';
 import { getAllKeys } from './stats';
 
