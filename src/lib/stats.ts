@@ -5,12 +5,8 @@ import {
   StringKeyedObj
 } from '../types/types';
 import { GenericDatum, GenericDatumValue } from './dataInference';
-
 import { isNull } from 'lodash';
 import { fromPairs, toPairs } from './parseObjects';
-
-const updateMin = (value: number, min: number) => Math.min(value, min);
-const updateMax = (value: number, max: number) => Math.max(value, max);
 
 const getKeys = <T>(obj: T) => Object.keys(obj) as Array<keyof T>;
 
@@ -98,8 +94,8 @@ export const generateNewMoments = <T extends StringKeyedObj>(
       ) {
         const { min, max, sum } = variableMoments;
 
-        const newMin = !isNull(min) ? updateMin(value, min) : value;
-        const newMax = !isNull(max) ? updateMax(value, max) : value;
+        const newMin = !isNull(min) ? Math.min(value, min) : value;
+        const newMax = !isNull(max) ? Math.max(value, max) : value;
         const updatedSum = sum + value;
         const newContinousMoments = {
           frequencies: {},
@@ -114,8 +110,8 @@ export const generateNewMoments = <T extends StringKeyedObj>(
         typeof value === 'number'
       ) {
         const { min, max } = variableMoments;
-        const newMin = !isNull(min) ? updateMin(value, min) : value;
-        const newMax = !isNull(max) ? updateMax(value, max) : value;
+        const newMin = !isNull(min) ? Math.min(value, min) : value;
+        const newMax = !isNull(max) ? Math.max(value, max) : value;
 
         const newDatetimeMoments = {
           frequencies: {},

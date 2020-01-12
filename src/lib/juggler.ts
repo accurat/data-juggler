@@ -5,7 +5,6 @@ import {
   GenericDatum,
   ParserObject
 } from './dataInference';
-
 import {
   CategoricalDatum,
   ContinuousDatum,
