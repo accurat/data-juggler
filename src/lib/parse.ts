@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
   get,
   isNaN,
@@ -7,14 +8,7 @@ import {
   min as _min,
   toString
 } from 'lodash';
-
-import dayjs from 'dayjs';
-
-// tslint:disable-next-line:no-submodule-imports
 import CustomParseFormat from 'dayjs/plugin/customParseFormat'; // load on demand
-// tslint:disable-next-line:no-expression-statement
-dayjs.extend(CustomParseFormat); // use plugin
-
 import {
   FormatterObject,
   GenericDatum,
@@ -23,7 +17,6 @@ import {
   ParserObject,
   valiDate
 } from './dataInference';
-
 import {
   CategoricalDatum,
   ContinuousDatum,
@@ -36,17 +29,14 @@ import {
   NormalizingDatetime,
   StringKeyedObj
 } from '../types/types';
-
 import { conditionalValueMap, fromPairs, toPairs } from './parseObjects';
+import { convertToUnix } from './dateUtils';
+dayjs.extend(CustomParseFormat); // use plugin
 
-// tslint:disable:no-this
-// tslint:disable:no-object-literal-type-assertion
-// tslint:disable:no-object-mutation
-// tslint:disable:no-expression-statement
 // Fuck you tslint, watch me use those fucking if statements.
 
 type ParsedDatum<T> = {
-  [P in keyof T]: ContinuousDatum | DatetimeDatum | CategoricalDatum;
+  [P in keyof T]: ContinuousDatum | DatetimeDatum | CategoricalDatum
 };
 
 export const identity = <I>(t: I): I => t;
@@ -203,14 +193,6 @@ export function parseDatumFactory<T extends StringKeyedObj>(
     );
   };
 }
-
-const convertToUnix = <V extends string | number>(v: V): number => {
-  if (isNumber(v)) {
-    return dayjs(v * 1000).unix();
-  } else {
-    return dayjs(v).unix();
-  }
-};
 
 export function parseDates<T extends StringKeyedObj>(
   rawData: Array<GenericDatum<T>>,

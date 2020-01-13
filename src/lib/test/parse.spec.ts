@@ -8,7 +8,7 @@ import { autoInferenceType } from '../dataInference';
 
 test('parseDates with string dates', t => {
   const dates = [{ d: '2012-12-22' }, { d: '2013-12-22' }];
-  
+
   t.notThrows(() => parseDates(dates, autoInferenceType(dates, {}), {}));
 
   const inferObj = autoInferenceType(dates, {});
@@ -40,16 +40,20 @@ test('Custom parser', t => {
     { a: 2, b: 'dad', c: 2, d: '2018-03-20' },
     { a: 1.5, b: 'cousin', c: 3, d: '2019-06-22' },
     { a: 1, b: 'dad', c: 4, d: '2029-02-20' }
-  ]
-  
+  ];
+
   const types = autoInferenceType(dataset, {});
 
   const wrongParser = { d: (day: string) => dayjs(day, 'DD-MM-YYYY').unix() };
   const parsedDatesWithWrongParser = parseDates(dataset, types, wrongParser);
   const firstDateWrongParsed = parsedDatesWithWrongParser[0].d;
-  
+
   const correctParser = { d: (day: string) => dayjs(day, 'YYYY-MM-DD').unix() };
-  const parsedDatesWithCorrectParser = parseDates(dataset, types, correctParser);
+  const parsedDatesWithCorrectParser = parseDates(
+    dataset,
+    types,
+    correctParser
+  );
   const firstDateCorrectParsed = parsedDatesWithCorrectParser[0].d;
 
   t.true(isNaN(firstDateWrongParsed));

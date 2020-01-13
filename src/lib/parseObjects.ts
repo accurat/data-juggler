@@ -2,10 +2,6 @@ import { InferObject, ValueOf, StringKeyedObj } from '../types/types';
 import { GenericDatum } from './dataInference';
 import { getAllKeys } from './stats';
 
-// tslint:disable:no-expression-statement
-// tslint:disable:no-object-mutation
-// tslint:disable:no-object-literal-type-assertion
-
 export function fromPairs<K extends string, V>(
   pairs: Array<[K, V]>
 ): Record<K, V> {
@@ -43,10 +39,10 @@ function equalSets<T>(setOne: Set<T>, setTwo: Set<T>): boolean {
 }
 
 export function doKeysMatch<T extends StringKeyedObj>(
-  dataSet: Array<GenericDatum<T>>,
+  dataset: Array<GenericDatum<T>>,
   inferObject: InferObject<T>
 ): boolean {
-  const incomingKeys = getAllKeys(dataSet);
+  const incomingKeys = getAllKeys(dataset);
   const expectedKeys = new Set([...Object.keys(inferObject)]);
   return equalSets(incomingKeys, expectedKeys);
 }

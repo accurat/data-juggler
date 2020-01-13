@@ -6,9 +6,7 @@ type ScalingFn = (
   upper: number
 ) => (scaledValue: unknown) => number;
 
-export type ScalingFnsRecords<D> = {
-  [K in keyof D]: ScalingFn;
-};
+export type ScalingFnsRecords<D> = { [K in keyof D]: ScalingFn };
 
 function scaleFromMoment(m: MomentsType): ScalingFn {
   const { min, max } = m;

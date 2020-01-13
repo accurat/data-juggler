@@ -46,7 +46,7 @@ export function dataJuggler<T extends StringKeyedObj>(
   scalers: ScalingFnsRecords<T>;
 } {
   const { types = {}, formatter, parser = {} } = config;
-  const filledDataSet = populateNullData(unparsedDataset);
+  const filledDataset = populateNullData(unparsedDataset);
 
   const inferedTypes = autoInferenceType(
     unparsedDataset,
@@ -58,9 +58,9 @@ export function dataJuggler<T extends StringKeyedObj>(
     throw new Error(MISMATCH_KEY);
   }
 
-  const dataSet = parseDates(filledDataSet, inferedTypes, parser);
+  const dataset = parseDates(filledDataset, inferedTypes, parser);
 
-  const moments = computeMoments(dataSet, inferedTypes);
+  const moments = computeMoments(dataset, inferedTypes);
 
   const datumPreprocessor = parseDatumFactory(
     inferedTypes,
@@ -68,7 +68,7 @@ export function dataJuggler<T extends StringKeyedObj>(
     formatter,
     parser
   );
-  const data = dataSet.map(datum => datumPreprocessor(datum));
+  const data = dataset.map(datum => datumPreprocessor(datum));
 
   const scalingFns = scalesFromMoments(moments);
 
