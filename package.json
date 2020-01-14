@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@types/lodash": "^4.14.123",
+    "core-js": "^3.6.4",
     "dayjs": "^1.8.13",
     "lodash": "^4.17.13",
     "trash": "^5.0.0"
