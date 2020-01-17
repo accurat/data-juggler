@@ -1,12 +1,14 @@
-import { get, isNaN, isNull, isNumber, max as _max, min as _min, toString } from 'lodash';
-
 import dayjs from 'dayjs';
-
-// tslint:disable-next-line:no-submodule-imports
-import CustomParseFormat from 'dayjs/plugin/customParseFormat' // load on demand
-// tslint:disable-next-line:no-expression-statement
-dayjs.extend(CustomParseFormat) // use plugin
-
+import {
+  get,
+  isNaN,
+  isNull,
+  isNumber,
+  max as _max,
+  min as _min,
+  toString
+} from 'lodash';
+import CustomParseFormat from 'dayjs/plugin/customParseFormat'; // load on demand
 import {
   FormatterObject,
   GenericDatum,
@@ -14,8 +16,7 @@ import {
   ParserFunction,
   ParserObject,
   valiDate
-} from './utils/dataInference';
-
+} from './dataInference';
 import {
   CategoricalDatum,
   ContinuousDatum,
@@ -28,26 +29,22 @@ import {
   NormalizingDatetime,
   StringKeyedObj
 } from '../types/types';
+import { conditionalValueMap, fromPairs, toPairs } from './parseObjects';
+import { convertToUnix } from './dateUtils';
+dayjs.extend(CustomParseFormat); // use plugin
 
-import { conditionalValueMap, fromPairs, toPairs } from './utils/parseObjects';
-
-
-// tslint:disable:no-this
-// tslint:disable:no-object-literal-type-assertion
-// tslint:disable:no-object-mutation
-// tslint:disable:no-expression-statement
 // Fuck you tslint, watch me use those fucking if statements.
 
 type ParsedDatum<T> = {
   [P in keyof T]: ContinuousDatum | DatetimeDatum | CategoricalDatum
 };
 
-export const identity = <I>(t: I):I => t
+export const identity = <I>(t: I): I => t;
 
 const logScale = (v: number, l: number, u: number) => {
-  const safeL = l === 0 ? l + 0.0001 : l
-  return Math.log(v / safeL) / Math.log(u / safeL)
-}
+  const safeL = l === 0 ? l + 0.0001 : l;
+  return Math.log(v / safeL) / Math.log(u / safeL);
+};
 
 export function parseDatumFactory<T extends StringKeyedObj>(
   inferObject: InferObject<T>,
@@ -68,22 +65,32 @@ export function parseDatumFactory<T extends StringKeyedObj>(
               ? formatterObject[variable]
               : [];
 
-          const parse: ParserFunction | typeof identity = get(parser, variable, identity)
+          const parse: ParserFunction | typeof identity = get(
+            parser,
+            variable,
+            identity
+          );
 
           switch (inference) {
             case 'continuous': {
-              const { min, max, sum } = moments[variable] as NormalizingContinuous;
+              const { min, max, sum } = moments[
+                variable
+              ] as NormalizingContinuous;
               const datum: ContinuousDatum = {
                 raw: parse(value), // FIXME: Better typing, link this to inference
                 get scaled(): null | number {
-                  if (isNull(this.raw)) { return null }
+                  if (isNull(this.raw)) {
+                    return null;
+                  }
 
                   return !isNull(min) && !isNull(max)
                     ? (this.raw - min) / (max - min)
                     : this.raw;
                 },
                 get logScale(): null | number {
-                  if (isNull(this.raw)) { return null }
+                  if (isNull(this.raw)) {
+                    return null;
+                  }
 
                   return !isNull(min) && !isNull(max)
                     ? logScale(this.raw, min, max)
@@ -97,11 +104,10 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                     configurable: true,
                     enumerable: true,
                     get(): string {
-                      return formatter(
-                        datum, {
-                          max,
-                          min,
-                          sum,
+                      return formatter(datum, {
+                        max,
+                        min,
+                        sum
                       });
                     }
                   });
@@ -112,9 +118,9 @@ export function parseDatumFactory<T extends StringKeyedObj>(
             }
             case 'date': {
               const { min, max } = moments[variable] as NormalizingDatetime;
-              const rawValue = value
+              const rawValue = value;
               const datum: DatetimeDatum = {
-                raw: (!isNaN(rawValue) && isNumber(rawValue)) ? rawValue : null ,
+                raw: !isNaN(rawValue) && isNumber(rawValue) ? rawValue : null,
                 get dateTime(): dayjs.Dayjs {
                   return dayjs.unix(this.raw || 0);
                 },
@@ -125,13 +131,14 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                   return this.dateTime.format('DD-MM-YYYY');
                 },
                 get scaled(): number | null {
-
                   return !isNull(min) && !isNull(max) && !isNull(rawValue)
                     ? (Number(rawValue) - min) / (max - min)
                     : null;
                 },
                 get logScale(): null | number {
-                  if (isNull(this.raw)) { return null }
+                  if (isNull(this.raw)) {
+                    return null;
+                  }
 
                   return !isNull(min) && !isNull(max)
                     ? logScale(this.raw, min, max)
@@ -145,10 +152,9 @@ export function parseDatumFactory<T extends StringKeyedObj>(
                     configurable: true,
                     enumerable: true,
                     get(): string {
-                      return formatter(
-                        datum, {
-                          max,
-                          min,
+                      return formatter(datum, {
+                        max,
+                        min
                       });
                     }
                   });
@@ -160,7 +166,9 @@ export function parseDatumFactory<T extends StringKeyedObj>(
 
             case 'categorical': {
               const stringValue = toString(value);
-              const datum: CategoricalDatum = { raw: parse(stringValue) as string };
+              const datum: CategoricalDatum = {
+                raw: parse(stringValue) as string
+              };
               const { frequencies } = moments[
                 variable
               ] as NormalizingCategorical;
@@ -186,18 +194,10 @@ export function parseDatumFactory<T extends StringKeyedObj>(
   };
 }
 
-const convertToUnix = <V extends string | number>(v: V): number => {
-  if (isNumber(v)) {
-    return dayjs(v * 1000).unix()
-  } else {
-    return dayjs(v).unix()
-  }
-}
-
-export function parseDates<T>(
+export function parseDates<T extends StringKeyedObj>(
   rawData: Array<GenericDatum<T>>,
   inferTypes: InferObject<T>,
-  parser: ParserObject<T>,
+  parser: ParserObject<T>
 ): Array<{ [P in keyof T]: GenericDatumValue }> {
   const dateKeys = toPairs(inferTypes)
     .filter(([_, t]) => t === 'date')
@@ -206,12 +206,13 @@ export function parseDates<T>(
   const isPairDate = <K extends keyof T, S>(key: K, _: unknown): _ is S =>
     dateKeys.includes(key);
 
-  const makeDayjs = <K extends keyof T, V extends string | number>(key: K, value: V): number =>
-    get(
-      parser,
-      key,
-      (v: V) => !isNaN(dayjs(v).unix()) ? convertToUnix(v) : null
-    )(value)
+  const makeDayjs = <K extends keyof T, V extends string | number>(
+    key: K,
+    value: V
+  ): number =>
+    get(parser, key, (v: V) =>
+      !isNaN(dayjs(v).unix()) ? convertToUnix(v) : null
+    )(value);
 
   return rawData.map(datum =>
     conditionalValueMap<keyof T, number, GenericDatumValue, number>(

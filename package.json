@@ -16,7 +16,6 @@
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:tslint": "tslint --fix --project .",
     "test": "run-s build test:*",
-    "test:lint": "tslint --project . && prettier \"src/**/*.ts\" --list-different",
     "test:unit": "nyc --silent ava",
     "watch": "run-s clean build:main && run-p \"build:main -- -w\" \"test:unit -- --watch\"",
     "cov": "run-s build test:unit cov:html && opn coverage/index.html",
@@ -52,6 +51,7 @@
   },
   "dependencies": {
     "@types/lodash": "^4.14.123",
+    "core-js": "^3.6.4",
     "dayjs": "^1.8.13",
     "lodash": "^4.17.13",
     "trash": "^5.0.0"
