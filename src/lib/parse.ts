@@ -33,8 +33,6 @@ import { conditionalValueMap, fromPairs, toPairs } from './parseObjects';
 import { convertToUnix } from './dateUtils';
 dayjs.extend(CustomParseFormat); // use plugin
 
-// Fuck you tslint, watch me use those fucking if statements.
-
 type ParsedDatum<T> = {
   [P in keyof T]: ContinuousDatum | DatetimeDatum | CategoricalDatum
 };
