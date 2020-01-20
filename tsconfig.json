@@ -4,7 +4,7 @@
     "outDir": "build/main",
     "rootDir": "src",
     "moduleResolution": "node",
-    "module": "es6",
+    "module": "commonjs",
     "keyofStringsOnly": true,
     "declaration": true,
     "inlineSourceMap": true,
@@ -37,7 +37,6 @@
     // "emitDecoratorMetadata": true /* Enables experimental support for emitting type metadata for decorators. */,
 
     "lib": ["es2017", "dom"],
-    "types": [],
     "typeRoots": ["node_modules/@types"]
   },
   "include": ["src/**/*.ts"],
