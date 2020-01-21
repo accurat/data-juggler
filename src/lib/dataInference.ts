@@ -73,9 +73,11 @@ export function detectValue(
 }
 
 export function isFormatDateValid(
-  value: string | number,
+  value: string,
   parser?: ParserFunction
 ): boolean {
+  if(!inferIfStringIsNumber(value[0])) return false
+
   // this will match yyyy-mm-dd and also yyyy-m-d
   const regDate = /^([1-9][0-9]{3})\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/;
   // TODO: add other regex to accept also other date formats
