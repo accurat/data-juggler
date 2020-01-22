@@ -28,7 +28,7 @@ export interface MomentsType {
   sum: number;
   min: number | null;
   max: number | null;
-  frequencies: { readonly [instance: string]: number };
+  frequencies: { [instance: string]: number };
 }
 
 export type MapSchema<T extends DatumType> = MapTypeInfer[T];
