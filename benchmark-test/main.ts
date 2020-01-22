@@ -1,11 +1,11 @@
-const { performance: perf} = require('perf_hooks')
-const __ = require('lodash')
+const { performance: perf } = require('perf_hooks')
+const _ = require('lodash')
 const { formatMs } = require('./utils.ts')
-const { dataJuggler } = require('../build/main/lib/juggler.js')
+const { dataJuggler } = require('../src/lib/juggler.ts')
 const dataset = require('./datasets/dataset.json')
 
-function computeMeanFuncExecutionTime(n, func) {
-  const mss = __.times(n).map((index) => {
+function computeMeanFuncExecutionTime(n: number, func: Function) {
+  const mss = _.times(n).map((index: number) => {
     const t0 = perf.now();
     func()
     const t1 = perf.now()
@@ -13,8 +13,8 @@ function computeMeanFuncExecutionTime(n, func) {
     console.log(`⏳ ${index + 1}/${n}:\t${formatMs(ms)}`)
     return ms
   })
-  const meanMs = __.mean(mss)
+  const meanMs = _.mean(mss)
   console.log(`⌛️ mean: ${formatMs(meanMs)}`)
 }
 
-computeMeanFuncExecutionTime(5, () => dataJuggler(dataset))
+computeMeanFuncExecutionTime(20, () => dataJuggler(dataset))

@@ -5,18 +5,18 @@ module.exports = {
   /**
    * Save the data array of objects to json.
    */
-  saveAsJSON: function(outputPath, filename, data) {
+  saveAsJSON: function(outputPath: string, filename: string, dataset: any) {
     if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath)
     }
     const outputPathWithFilename = `${outputPath}${filename}.json`
-    fs.writeFileSync(outputPathWithFilename, JSON.stringify(data))
+    fs.writeFileSync(outputPathWithFilename, JSON.stringify(dataset))
   },
 
   /**
    * Format ms to 'h m s ms'.
    */
-  formatMs: function(ms) {
+  formatMs: function(ms: number) {
     const milliseconds = Math.floor((ms % 1000) / 100)
     let seconds = Math.floor((ms / 1000) % 60)
     let minutes = Math.floor((ms / (1000 * 60)) % 60)
@@ -32,7 +32,7 @@ module.exports = {
   /**
    * Return file weight in bytes.
    */
-  getFilesizeBytes: function(filename) {
+  getFilesizeBytes: function(filename: string) {
     const stats = fs.statSync(filename)
     return stats.size
   },
@@ -40,7 +40,7 @@ module.exports = {
   /**
    * Returns formatted bytes.
    */
-  formatBytes: function(bytes, decimals = 2) {
+  formatBytes: function(bytes: number, decimals = 2) {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']

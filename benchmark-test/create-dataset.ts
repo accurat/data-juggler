@@ -1,4 +1,3 @@
-
 const _ = require('lodash')
 const chance = require('chance').Chance()
 const { saveAsJSON, getFilesizeBytes, formatBytes } = require('./utils.ts')
@@ -11,8 +10,8 @@ const createDate = () => {
   return date
 }
 
-function createAndSaveDataset(rowsCounter, outpathPath, filename) {
-  const data = _.times(rowsCounter).map((index) => {
+function createAndSaveDataset(rowsCounter: number, outpathPath: string, filename: string) {
+  const dataset = _.times(rowsCounter).map((index: number) => {
     return {
       id: index,
       firstName: chance.first(),
@@ -45,7 +44,7 @@ function createAndSaveDataset(rowsCounter, outpathPath, filename) {
       weekday: chance.weekday(),
     }
   })
-  saveAsJSON(outpathPath, filename, data)
+  saveAsJSON(outpathPath, filename, dataset)
 }
 
 async function createDataset() {
