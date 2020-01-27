@@ -1,12 +1,10 @@
 import {
   InferObject,
   MomentsObject,
-  MomentsType,
   StringKeyedObj
 } from '../types/types';
-import { GenericDatum, GenericDatumValue } from './dataInference';
+import { GenericDatum } from './dataInference';
 import { isNull } from 'lodash';
-import { fromPairs, toPairs } from './parseObjects';
 
 const getKeys = <T>(obj: T) => Object.keys(obj) as Array<keyof T>;
 
@@ -65,72 +63,56 @@ export const generateNewMoments = <T extends StringKeyedObj>(
   datum: GenericDatum<T>,
   inferObject: InferObject<T>
 ) => {
-  return fromPairs(
-    toPairs(datum).map(([variable, value]: [keyof T, GenericDatumValue]) => {
-      const variableMoments = accumulator[variable];
+  Object.keys(datum).forEach((variable: keyof T) => {
+      const columnAccumulator = accumulator[variable];
+      const columnType = inferObject[variable]
+      const value = datum[variable]
 
-      if (
-        inferObject[variable] === 'categorical' &&
-        (typeof value === 'string' ||
-          typeof value === 'number' ||
-          typeof value === 'boolean')
-      ) {
+      if (columnType === 'categorical' && (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')) {
         const stringValue = value.toString();
-        const { frequencies } = variableMoments;
-        const newFrequencies = {
-          ...frequencies,
-          [stringValue]: frequencies[stringValue]
-            ? frequencies[stringValue] + 1
-            : 1
-        };
-        const newFrequencyMoments = {
-          frequencies: newFrequencies,
+        if(columnAccumulator.frequencies[stringValue]) {
+          columnAccumulator.frequencies[stringValue] += 1
+        } else {
+          columnAccumulator.frequencies[stringValue] = 1
+        }
+        const newMoments = {
+          frequencies: columnAccumulator.frequencies,
           max: null,
           min: null,
           sum: 0
         };
-
-        return [variable, newFrequencyMoments] as [keyof T, MomentsType];
-      } else if (
-        inferObject[variable] === 'continuous' &&
-        typeof value === 'number'
-      ) {
-        const { min, max, sum } = variableMoments;
+        accumulator[variable] = newMoments
+      } else if (columnType === 'continuous' && typeof value === 'number') {
+        const { min, max, sum } = columnAccumulator;
 
         const newMin = !isNull(min) ? Math.min(value, min) : value;
         const newMax = !isNull(max) ? Math.max(value, max) : value;
-        const updatedSum = sum + value;
-        const newContinousMoments = {
+        const newSum = sum + value;
+        const newMoments = {
           frequencies: {},
           max: newMax,
           min: newMin,
-          sum: updatedSum
+          sum: newSum
         };
+        accumulator[variable] = newMoments
+      } else if (columnType === 'date' && typeof value === 'number') {
+        const { min, max } = columnAccumulator;
 
-        return [variable, newContinousMoments] as [keyof T, MomentsType];
-      } else if (
-        inferObject[variable] === 'date' &&
-        typeof value === 'number'
-      ) {
-        const { min, max } = variableMoments;
         const newMin = !isNull(min) ? Math.min(value, min) : value;
         const newMax = !isNull(max) ? Math.max(value, max) : value;
-
-        const newDatetimeMoments = {
+        const newMoments = {
           frequencies: {},
           max: newMax,
           min: newMin,
           sum: 0
         };
-        return [variable, newDatetimeMoments] as [keyof T, MomentsType];
+        accumulator[variable] = newMoments
       } else {
-        return [variable, variableMoments] as [
-          keyof T,
-          MomentsObject<T>[keyof T]
-        ];
+        accumulator[variable] = columnAccumulator
       }
     })
-  );
+
+    return accumulator
 };
 
 export function computeMoments<T extends StringKeyedObj>(
