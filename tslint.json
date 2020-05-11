@@ -25,12 +25,14 @@
     "no-class": true,
     "no-mixed-interface": false,
     "no-expression-statement": [
-      true,
+      false,
       { "ignore-prefix": ["console.", "process.exit"] }
     ],
     "no-if-statement": false,
     /* end tslint-immutable rules */
 
-    "ordered-imports": false
+    "ordered-imports": false,
+    "curly": false,
+    "no-shadowed-variable": false
   }
 }
