@@ -81,8 +81,8 @@ export function isFormatDateValid(
   // this will match date (and time) formats:
   //   date formats: YYYY-MM-DD or YYYY-M-D
   //   time formats: HH:mm:ss
-  // separator between date and time can be ` ` or `, `
-  const regDate = /^([1-9][0-9]{3})\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])(,?[\s]([0-1][0-9]|[2][0-3]):([0-5][0-9])(:([0-5][0-9]))?)?$/;
+  // separator between date and time must be ` `
+  const regDate = /^([1-9][0-9]{3})\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])([\s]([0-1][0-9]|[2][0-3]):([0-5][0-9])(:([0-5][0-9]))?)?$/;
   // TODO: add other regex to accept also other date formats
 
   const isFormatDateValid = regDate.test(value.toString());

@@ -76,16 +76,14 @@ test('isDateValid', t => {
   t.is(isFormatDateValid('2017-02-30'), true); // this day doesn't exist but we check only the date format
   t.is(isFormatDateValid('2020-04-31'), true); // this day doesn't exist but we check only the date format
   t.is(isFormatDateValid('2019-01-15 13:12:29'), true);
-  t.is(isFormatDateValid('2019-01-15, 13:12:29'), true);
-  t.is(isFormatDateValid('2019-01-15, 00:00:00'), true);
-  t.is(isFormatDateValid('2019-01-15, 23:59:59'), true);
   t.is(isFormatDateValid('17-02-2019', rightParser), true);
   t.is(isFormatDateValid('17-02-2019', wrongParser), true); // this shouldn't be right but we assume that if the user has written a parser, then the dates are in the correct format
   t.is(isFormatDateValid('17-02-2019', defaultParser), true); // this shouldn't be right but we assume that if the user has written a parser, then the dates are in the correct format
   
-  t.is(isFormatDateValid('2019-01-15, 24:00:00'), false);
-  t.is(isFormatDateValid('2019-01-15, 23:60:00'), false);
-  t.is(isFormatDateValid('2019-01-15, 23:59:60'), false);
+  t.is(isFormatDateValid('2019-01-15 13:12:29'), true);
+  t.is(isFormatDateValid('2019-01-15 24:00:00'), false);
+  t.is(isFormatDateValid('2019-01-15 23:60:00'), false);
+  t.is(isFormatDateValid('2019-01-15 23:59:60'), false);
   t.is(isFormatDateValid('2019-01-15 13:12:29.0'), false);
   t.is(isFormatDateValid('17-02-2019'), false);
   t.is(isFormatDateValid('0000-01-01'), false);
