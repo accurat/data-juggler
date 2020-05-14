@@ -10,9 +10,8 @@ import {
 } from '../types/types';
 import { fromPairs } from './parseObjects';
 import { getAllKeys } from './stats';
-
-import CustomParseFormat from 'dayjs/plugin/customParseFormat'; // load on demand
-dayjs.extend(CustomParseFormat); // use plugin
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
 export type GenericDatumValue = number | string | boolean | null;
 
@@ -72,20 +71,37 @@ export function detectValue(
   }
 }
 
+// references:
+// https://day.js.org/docs/en/parse/string-format
+// https://day.js.org/docs/en/display/format
+export const DATE_FORMATS = [
+  'YYYY-MM-DD',
+  'YYYY-MM-D',
+  'YYYY-M-DD',
+  'YYYY-M-D',
+  'YYYY-MM-DD HH:mm',
+  'YYYY-MM-DD HH:mm:ss',
+  'YYYY-MM-DD HH:mm:ss.SSS',
+  'YYYY-MM-DD HH:mm:ss A',
+  'YYYY-MM-DD HH:mm:ss a',
+  'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]' // ISO8601
+]
+
+function isValidDate(dateString: string, formats: string[], strictMode = true): boolean {
+  const results = formats.map(format => {
+    // @ts-ignore
+    return dayjs(dateString, format, strictMode).isValid()
+  })
+  return results.some(res => res === true)
+}
+
 export function isFormatDateValid(
   value: string,
   parser?: ParserFunction
 ): boolean {
   if(!inferIfStringIsNumber(value[0])) return false
 
-  // this will match date (and time) formats:
-  //   date formats: YYYY-MM-DD or YYYY-M-D
-  //   time formats: HH:mm:ss
-  // separator between date and time must be ` `
-  const regDate = /^([1-9][0-9]{3})\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])([\s]([0-1][0-9]|[2][0-3]):([0-5][0-9])(:([0-5][0-9]))?)?$/;
-  // TODO: add other regex to accept also other date formats
-
-  const isFormatDateValid = regDate.test(value.toString());
+  const isFormatDateValid = isValidDate(value, DATE_FORMATS);
 
   // NOTE: we assume that if the user has written a parser, then the dates are in the correct format
   return isFormatDateValid || !isUndefined(parser);
