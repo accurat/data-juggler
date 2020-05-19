@@ -13,6 +13,22 @@ import { getAllKeys } from './stats';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
+// references:
+// https://day.js.org/docs/en/parse/string-format
+// https://day.js.org/docs/en/display/format
+export const DATE_FORMATS = [
+  'YYYY-MM-DD',
+  'YYYY-MM-D',
+  'YYYY-M-DD',
+  'YYYY-M-D',
+  'YYYY-MM-DD HH:mm',
+  'YYYY-MM-DD HH:mm:ss',
+  'YYYY-MM-DD HH:mm:ss.SSS',
+  'YYYY-MM-DD HH:mm:ss A',
+  'YYYY-MM-DD HH:mm:ss a',
+  'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]' // ISO8601
+]
+
 export type GenericDatumValue = number | string | boolean | null;
 
 export type GenericDatum<T extends StringKeyedObj> = {
@@ -82,22 +98,6 @@ export function detectValue(
     return 'categorical';
   }
 }
-
-// references:
-// https://day.js.org/docs/en/parse/string-format
-// https://day.js.org/docs/en/display/format
-export const DATE_FORMATS = [
-  'YYYY-MM-DD',
-  'YYYY-MM-D',
-  'YYYY-M-DD',
-  'YYYY-M-D',
-  'YYYY-MM-DD HH:mm',
-  'YYYY-MM-DD HH:mm:ss',
-  'YYYY-MM-DD HH:mm:ss.SSS',
-  'YYYY-MM-DD HH:mm:ss A',
-  'YYYY-MM-DD HH:mm:ss a',
-  'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]' // ISO8601
-]
 
 function isValidDate(dateString: string, formats: string[], strictMode = true): boolean {
   const results = formats.map(format => {
