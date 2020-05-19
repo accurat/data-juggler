@@ -62,9 +62,21 @@ export function detectValue(
     return 'unknown';
   }
 
+  const isDate = (value: any, parser?: ParserFunction) => {
+    if (typeof value === 'string' && isFormatDateValid(value, parser))
+      return true;
+    if (
+      value &&
+      Object.prototype.toString.call(value) === '[object Date]' &&
+      !isNaN(value)
+    )
+      return true;
+    return false;
+  };
+
   if (inferIsNumber(value)) {
     return 'continuous';
-  } else if (typeof value === 'string' && isFormatDateValid(value, parser)) {
+  } else if (isDate(value, parser)) {
     return 'date';
   } else {
     return 'categorical';
