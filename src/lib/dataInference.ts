@@ -21,13 +21,29 @@ export const DATE_FORMATS = [
   'YYYY-MM-D',
   'YYYY-M-DD',
   'YYYY-M-D',
+
   'YYYY-MM-DD HH:mm',
+  'YYYY-MM-DD HH:mm[Z]',
+  'YYYY-MM-DD[T]HH:mm',
+  'YYYY-MM-DD[T]HH:mm[Z]',
+  
   'YYYY-MM-DD HH:mm:ss',
+  'YYYY-MM-DD HH:mm:ss[Z]',
+  'YYYY-MM-DD[T]HH:mm:ss',
+  'YYYY-MM-DD[T]HH:mm:ss[Z]',
+
   'YYYY-MM-DD HH:mm:ss.SSS',
+  'YYYY-MM-DD HH:mm:ss.SSS[Z]',
+  'YYYY-MM-DD[T]HH:mm:ss.SSS',
+  'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]', // ISO8601
+
   'YYYY-MM-DD HH:mm:ss A',
   'YYYY-MM-DD HH:mm:ss a',
-  'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]' // ISO8601
-]
+  
+  // these two formats don't work
+  // 'YYYY-MM-DD HH:mm:ssZ', // 2013-02-08 09:00:00+07:00
+  // 'YYYY-MM-DD HH:mm:ssZZ', // 2013-02-08 09:00:00-0700
+];
 
 export type GenericDatumValue = number | string | boolean | null;
 
@@ -99,7 +115,8 @@ export function detectValue(
   }
 }
 
-function isValidDate(dateString: string, formats: string[], strictMode = true): boolean {
+function isValidDate(dateString: string, formats: string[]): boolean {
+  const strictMode = true
   const results = formats.map(format => {
     // @ts-ignore
     return dayjs(dateString, format, strictMode).isValid()
