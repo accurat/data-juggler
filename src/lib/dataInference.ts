@@ -104,11 +104,8 @@ export function detectValue(
 
 function isValidDate(dateString: string, formats: string[]): boolean {
   const strictMode = true
-  const results = formats.map(format => {
-    // @ts-ignore
-    return dayjs(dateString, format, strictMode).isValid()
-  })
-  return results.some(res => res === true)
+  // @ts-ignore
+  return formats.some(format => dayjs(dateString, format, strictMode).isValid())
 }
 
 export function isFormatDateValid(
