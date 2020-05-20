@@ -95,7 +95,6 @@ test('isDateValid', t => {
   t.is(isFormatDateValid('2016-01-01 11:31:23 am'), true);
   t.is(isFormatDateValid('2016-01-01 23:31:23 pm'), true);
 
-
   t.is(isFormatDateValid('17-02-2019', rightParser), true);
   t.is(isFormatDateValid('17-02-2019', wrongParser), true); // this shouldn't be right but we assume that if the user has written a parser, then the dates are in the correct format
   t.is(isFormatDateValid('17-02-2019', defaultParser), true); // this shouldn't be right but we assume that if the user has written a parser, then the dates are in the correct format
