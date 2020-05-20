@@ -104,8 +104,7 @@ export function detectValue(
 
 function isValidDate(dateString: string, formats: string[]): boolean {
   const strictMode = true
-  // ts-ignore is necessary because of strictMode parameter: `Argument of type 'true' is not assignable to parameter of type 'string | undefined'.`
-  // @ts-ignore
+  // @ts-ignore: necessary because of strictMode parameter: `Argument of type 'true' is not assignable to parameter of type 'string | undefined'.`
   return formats.some(format => dayjs(dateString, format, strictMode).isValid())
 }
 
