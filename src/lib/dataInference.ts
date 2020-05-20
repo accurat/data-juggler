@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { get, isFinite, isNaN, isNull, isUndefined, keys } from 'lodash';
+import { get, isFinite, isNaN, isNull, isUndefined, keys, isDate, isString } from 'lodash';
 import {
   CategoricalDatum,
   ContinuousDatum,
@@ -10,9 +10,40 @@ import {
 } from '../types/types';
 import { fromPairs } from './parseObjects';
 import { getAllKeys } from './stats';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
-import CustomParseFormat from 'dayjs/plugin/customParseFormat'; // load on demand
-dayjs.extend(CustomParseFormat); // use plugin
+// references:
+// https://day.js.org/docs/en/parse/string-format
+// https://day.js.org/docs/en/display/format
+export const DATE_FORMATS = [
+  'YYYY-MM-DD',
+  'YYYY-MM-D',
+  'YYYY-M-DD',
+  'YYYY-M-D',
+
+  'YYYY-MM-DD HH:mm',
+  'YYYY-MM-DD HH:mm[Z]',
+  'YYYY-MM-DD[T]HH:mm',
+  'YYYY-MM-DD[T]HH:mm[Z]',
+  
+  'YYYY-MM-DD HH:mm:ss',
+  'YYYY-MM-DD HH:mm:ss[Z]',
+  'YYYY-MM-DD[T]HH:mm:ss',
+  'YYYY-MM-DD[T]HH:mm:ss[Z]',
+
+  'YYYY-MM-DD HH:mm:ss.SSS',
+  'YYYY-MM-DD HH:mm:ss.SSS[Z]',
+  'YYYY-MM-DD[T]HH:mm:ss.SSS',
+  'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]', // ISO8601
+
+  'YYYY-MM-DD HH:mm:ss A',
+  'YYYY-MM-DD HH:mm:ss a',
+  
+  // these two formats don't work
+  // 'YYYY-MM-DD HH:mm:ssZ', // 2013-02-08 09:00:00+07:00
+  // 'YYYY-MM-DD HH:mm:ssZZ', // 2013-02-08 09:00:00-0700
+];
 
 export type GenericDatumValue = number | string | boolean | null;
 
@@ -62,14 +93,19 @@ export function detectValue(
   if (!value || isNull(value) || typeof value === 'boolean') {
     return 'unknown';
   }
-
   if (inferIsNumber(value)) {
     return 'continuous';
-  } else if (typeof value === 'string' && isFormatDateValid(value, parser)) {
+  } else if (isDate(value) || (isString(value) && isFormatDateValid(value, parser))) {
     return 'date';
   } else {
     return 'categorical';
   }
+}
+
+function isValidDate(dateString: string, formats: string[]): boolean {
+  const strictMode = true
+  // @ts-ignore: necessary because of strictMode parameter: `Argument of type 'true' is not assignable to parameter of type 'string | undefined'.`
+  return formats.some(format => dayjs(dateString, format, strictMode).isValid())
 }
 
 export function isFormatDateValid(
@@ -78,11 +114,7 @@ export function isFormatDateValid(
 ): boolean {
   if(!inferIfStringIsNumber(value[0])) return false
 
-  // this will match yyyy-mm-dd and also yyyy-m-d
-  const regDate = /^([1-9][0-9]{3})\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/;
-  // TODO: add other regex to accept also other date formats
-
-  const isFormatDateValid = regDate.test(value.toString());
+  const isFormatDateValid = isValidDate(value, DATE_FORMATS);
 
   // NOTE: we assume that if the user has written a parser, then the dates are in the correct format
   return isFormatDateValid || !isUndefined(parser);
